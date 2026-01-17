@@ -225,54 +225,198 @@ a {
 
 .client-card {
   background: #151c29;
-  border-radius: 16px;
+  border-radius: 18px;
   padding: 18px;
   border: 1px solid #26304a;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 12px 26px rgba(0, 0, 0, 0.25);
   display: grid;
-  gap: 10px;
+  gap: 12px;
   color: #e7ecfb;
+  position: relative;
+  overflow: hidden;
 }
 
 .client-card--green {
-  background: linear-gradient(145deg, #1b3a2f, #163026);
-  border-color: #1f4d3b;
+  border-color: rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 24px rgba(34, 197, 94, 0.25);
 }
 
 .client-card--amber {
-  background: linear-gradient(145deg, #3a2b16, #2c2211);
-  border-color: #5b3d12;
+  border-color: rgba(245, 158, 11, 0.45);
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.25);
 }
 
 .client-card--red {
-  background: linear-gradient(145deg, #3a1c1c, #2d1414);
-  border-color: #5b2323;
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 0 24px rgba(239, 68, 68, 0.25);
 }
 
-.client-card__header {
+.client-card--loading,
+.client-card--empty {
+  min-height: 220px;
+  display: grid;
+  place-content: center;
+  text-align: center;
+  color: #94a3b8;
+}
+
+.health-card__header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
 }
 
-.client-card__summary {
-  margin: 0;
-  font-weight: 500;
+.health-card__identity {
+  display: flex;
+  gap: 14px;
+  align-items: center;
 }
 
-.client-card__meta {
+.health-card__logo {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #1f293b;
+  border: 2px solid #34425f;
+  font-weight: 700;
+}
+
+.health-card__name-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.health-card__schemes {
+  display: flex;
+  gap: 6px;
+}
+
+.scheme-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.scheme-icon--mastercard {
+  background: radial-gradient(circle at 30% 40%, #ef4444, #f59e0b);
+}
+
+.scheme-icon--visa {
+  background: radial-gradient(circle at 30% 40%, #2563eb, #1e3a8a);
+}
+
+.health-card__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.health-card__section {
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 12px;
+  padding: 12px;
+  border: 1px solid #2b344b;
+  display: grid;
+  gap: 8px;
+}
+
+.health-card__section h4 {
+  margin: 0;
+}
+
+.health-card__section--wide {
+  grid-column: span 2;
+}
+
+.health-card__row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.ticket-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ticket-badges--warn .ticket-badge {
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.4);
+}
+
+.ticket-badge {
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  border: 1px solid transparent;
+}
+
+.ticket-badge--red {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+.ticket-badge--yellow {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.rollouts {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.rollout-row {
+  display: flex;
+  justify-content: space-between;
+  font-weight: 600;
+}
+
+.progress-bar {
+  height: 8px;
+  border-radius: 999px;
+  background: #1f2a3f;
+  overflow: hidden;
+}
+
+.progress-bar span {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #4ade80, #f59e0b);
+}
+
+.health-card__charts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
-  font-size: 13px;
+  align-items: center;
 }
 
-.client-card__metrics {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  font-size: 14px;
+.health-card__charts canvas {
+  max-height: 110px;
+}
+
+.health-card__frequency {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #cbd5f5;
+}
+
+.trend-indicator {
+  font-weight: 600;
 }
 
 .metric-label {
@@ -291,6 +435,30 @@ a {
 .details-link {
   color: #8ab4ff;
   font-weight: 600;
+}
+
+.skeleton {
+  border-radius: 12px;
+  background: linear-gradient(90deg, #1f2a3f 25%, #2a3752 50%, #1f2a3f 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton--header {
+  height: 48px;
+}
+
+.skeleton--body {
+  height: 80px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 .status-pill {
@@ -462,6 +630,10 @@ textarea {
 
   .client-card__metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .health-card__section--wide {
+    grid-column: span 1;
   }
 
   .dashboard-layout {
