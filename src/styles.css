@@ -161,6 +161,35 @@ a {
   gap: 24px;
 }
 
+.dashboard-layout--insights {
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+.dashboard-tabs {
+  display: inline-flex;
+  gap: 8px;
+  background: #121927;
+  border: 1px solid #283049;
+  padding: 6px;
+  border-radius: 999px;
+  margin: 16px 0 8px;
+}
+
+.tab-button {
+  border: none;
+  background: transparent;
+  color: #b8c6e3;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+.tab-button--active {
+  background: #273552;
+  color: #fff;
+}
+
 .dashboard-left,
 .dashboard-right {
   display: grid;
@@ -230,7 +259,7 @@ a {
   border: 1px solid #26304a;
   box-shadow: 0 12px 26px rgba(0, 0, 0, 0.25);
   display: grid;
-  gap: 12px;
+  gap: 10px;
   color: #e7ecfb;
   position: relative;
   overflow: hidden;
@@ -264,12 +293,14 @@ a {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 12px;
+  gap: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #242f46;
 }
 
 .health-card__identity {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
 }
 
@@ -288,6 +319,7 @@ a {
   display: flex;
   align-items: center;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 .health-card__schemes {
@@ -313,8 +345,8 @@ a {
 
 .health-card__grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .health-card__section {
@@ -323,7 +355,7 @@ a {
   padding: 12px;
   border: 1px solid #2b344b;
   display: grid;
-  gap: 8px;
+  gap: 6px;
 }
 
 .health-card__section h4 {
@@ -331,7 +363,7 @@ a {
 }
 
 .health-card__section--wide {
-  grid-column: span 2;
+  grid-column: 1 / -1;
 }
 
 .health-card__row {
@@ -413,6 +445,10 @@ a {
   justify-content: space-between;
   font-size: 13px;
   color: #cbd5f5;
+}
+
+.health-card__frequency span {
+  white-space: nowrap;
 }
 
 .trend-indicator {
@@ -634,6 +670,11 @@ textarea {
 
   .health-card__section--wide {
     grid-column: span 1;
+  }
+
+  .dashboard-tabs {
+    width: 100%;
+    justify-content: space-between;
   }
 
   .dashboard-layout {

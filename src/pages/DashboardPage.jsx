@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import {
   Chart as ChartJS,
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   const { clients } = useClients();
   const sortedClients = sortByStatus(clients);
   const counts = getCounts(clients);
+  const [activeTab, setActiveTab] = useState("clients");
 
   const healthTrend = {
     labels: ["Week 1", "Week 2", "Week 3", "Week 4", "Week 5", "Week 6"],
@@ -132,32 +134,59 @@ export default function DashboardPage() {
         </Link>
       </div>
 
-      <div className="summary-grid">
-        <div className="summary-card summary-card--healthy">
-          <div>
-            <p>Healthy Clients</p>
-            <h3>{counts.Green}</h3>
-          </div>
-          <span className="summary-icon">✓</span>
-        </div>
-        <div className="summary-card summary-card--risk">
-          <div>
-            <p>At Risk Clients</p>
-            <h3>{counts.Amber}</h3>
-          </div>
-          <span className="summary-icon">!</span>
-        </div>
-        <div className="summary-card summary-card--critical">
-          <div>
-            <p>Critical Clients</p>
-            <h3>{counts.Red}</h3>
-          </div>
-          <span className="summary-icon">!</span>
-        </div>
+      <div className="dashboard-tabs">
+        <button
+          type="button"
+          className={`tab-button ${activeTab === "clients" ? "tab-button--active" : ""}`}
+          onClick={() => setActiveTab("clients")}
+        >
+          Clients
+        </button>
+        <button
+          type="button"
+          className={`tab-button ${activeTab === "insights" ? "tab-button--active" : ""}`}
+          onClick={() => setActiveTab("insights")}
+        >
+          Insights
+        </button>
       </div>
 
-      <div className="dashboard-layout">
-        <div className="dashboard-left">
+      {activeTab === "clients" ? (
+        <>
+          <div className="summary-grid">
+            <div className="summary-card summary-card--healthy">
+              <div>
+                <p>Healthy Clients</p>
+                <h3>{counts.Green}</h3>
+              </div>
+              <span className="summary-icon">✓</span>
+            </div>
+            <div className="summary-card summary-card--risk">
+              <div>
+                <p>At Risk Clients</p>
+                <h3>{counts.Amber}</h3>
+              </div>
+              <span className="summary-icon">!</span>
+            </div>
+            <div className="summary-card summary-card--critical">
+              <div>
+                <p>Critical Clients</p>
+                <h3>{counts.Red}</h3>
+              </div>
+              <span className="summary-icon">!</span>
+            </div>
+          </div>
+          <div className="status-group">
+            <h3 className="status-title">Clients</h3>
+            <div className="client-grid client-grid--dense">
+              {sortedClients.map((client) => (
+                <ClientCard key={client.id} client={client} />
+              ))}
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="dashboard-layout dashboard-layout--insights">
           <div className="panel">
             <h3>Overall Client Health</h3>
             <Line data={healthTrend} options={chartOptions} />
@@ -169,7 +198,10 @@ export default function DashboardPage() {
           <div className="panel panel--compact">
             <h3>SLA Compliance</h3>
             <div className="panel-sla">
-              <Doughnut data={slaData} options={{ plugins: { legend: { display: false } } }} />
+              <Doughnut
+                data={slaData}
+                options={{ plugins: { legend: { display: false } } }}
+              />
               <div>
                 <p className="muted">Overall SLA score</p>
                 <h2>72%</h2>
@@ -177,17 +209,7 @@ export default function DashboardPage() {
             </div>
           </div>
         </div>
-        <div className="dashboard-right">
-          <div className="status-group">
-            <h3 className="status-title">Clients</h3>
-            <div className="client-grid client-grid--dense">
-              {sortedClients.map((client) => (
-                <ClientCard key={client.id} client={client} />
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
+      )}
     </section>
   );
 }
