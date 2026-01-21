@@ -61,75 +61,117 @@ export default function ConfigPage() {
   };
 
   return (
-    <section className="config">
-      <div className="config__header">
-        <h2>Add a new client</h2>
-        <p className="muted">
+    <section className="d-grid gap-3">
+      <div>
+        <h2 className="mb-1">Add a new client</h2>
+        <p className="text-body-secondary mb-0">
           Configure region, product, tier, and an initial weekly status note.
         </p>
       </div>
-      <form className="config-form" onSubmit={handleSubmit}>
-        <label>
-          Client name
-          <input
-            type="text"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            placeholder="Client name"
-          />
-        </label>
-        <label>
-          Region
-          <select value={region} onChange={(event) => setRegion(event.target.value)}>
-            {REGIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Product
-          <select value={product} onChange={(event) => setProduct(event.target.value)}>
-            {PRODUCTS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Tier
-          <select value={tier} onChange={(event) => setTier(event.target.value)}>
-            {TIERS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Initial status
-          <select value={status} onChange={(event) => setStatus(event.target.value)}>
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label>
-          Weekly summary
-          <textarea
-            rows={3}
-            value={summary}
-            onChange={(event) => setSummary(event.target.value)}
-            placeholder="Short weekly note..."
-          />
-        </label>
-        <button className="primary-button" type="submit">
-          Save client
-        </button>
+      <form className="card shadow-sm" onSubmit={handleSubmit}>
+        <div className="card-body">
+          <div className="row g-3">
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="client-name">
+                Client name
+              </label>
+              <input
+                id="client-name"
+                className="form-control"
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Client name"
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="client-region">
+                Region
+              </label>
+              <select
+                id="client-region"
+                className="form-select"
+                value={region}
+                onChange={(event) => setRegion(event.target.value)}
+              >
+                {REGIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="client-product">
+                Product
+              </label>
+              <select
+                id="client-product"
+                className="form-select"
+                value={product}
+                onChange={(event) => setProduct(event.target.value)}
+              >
+                {PRODUCTS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="client-tier">
+                Tier
+              </label>
+              <select
+                id="client-tier"
+                className="form-select"
+                value={tier}
+                onChange={(event) => setTier(event.target.value)}
+              >
+                {TIERS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="client-status">
+                Initial status
+              </label>
+              <select
+                id="client-status"
+                className="form-select"
+                value={status}
+                onChange={(event) => setStatus(event.target.value)}
+              >
+                {STATUS_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="col-12">
+              <label className="form-label" htmlFor="client-summary">
+                Weekly summary
+              </label>
+              <textarea
+                id="client-summary"
+                className="form-control"
+                rows={3}
+                value={summary}
+                onChange={(event) => setSummary(event.target.value)}
+                placeholder="Short weekly note..."
+              />
+            </div>
+          </div>
+        </div>
+        <div className="card-footer bg-white border-0">
+          <button className="btn btn-primary" type="submit">
+            Save client
+          </button>
+        </div>
       </form>
     </section>
   );
