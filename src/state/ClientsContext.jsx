@@ -20,6 +20,10 @@ export const ClientsProvider = ({ children }) => {
     );
   };
 
+  const removeClient = (id) => {
+    setClients((prev) => prev.filter((client) => client.id !== id));
+  };
+
   const addStatusUpdate = (id, update) => {
     setClients((prev) =>
       prev.map((client) => {
@@ -42,6 +46,7 @@ export const ClientsProvider = ({ children }) => {
       clients,
       addClient,
       updateClient,
+      removeClient,
       addStatusUpdate,
     }),
     [clients],

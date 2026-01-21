@@ -37,41 +37,57 @@ const toggleScheme = (selected, scheme) =>
     ? selected.filter((item) => item !== scheme)
     : [...selected, scheme];
 
+const createEmptyForm = () => ({
+  name: "",
+  region: REGIONS[0],
+  product: PRODUCTS[0],
+  tier: TIERS[0],
+  status: "Green",
+  summary: "",
+  schemes: [],
+  customSchemeLogo: "",
+});
+
 export default function ConfigPage() {
   const navigate = useNavigate();
-  const { addClient } = useClients();
-  const [name, setName] = useState("");
-  const [region, setRegion] = useState(REGIONS[0]);
-  const [product, setProduct] = useState(PRODUCTS[0]);
-  const [tier, setTier] = useState(TIERS[0]);
-  const [status, setStatus] = useState("Green");
-  const [summary, setSummary] = useState("");
-  const [schemes, setSchemes] = useState([]);
-  const [customSchemeLogo, setCustomSchemeLogo] = useState("");
+  const { clients, addClient, updateClient, removeClient } = useClients();
+  const [formState, setFormState] = useState(createEmptyForm);
+  const [editingId, setEditingId] = useState(null);
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (!name.trim()) {
+    if (!formState.name.trim()) {
       return;
     }
-    const trimmedName = name.trim();
+    const trimmedName = formState.name.trim();
     const today = new Date().toISOString().slice(0, 10);
+    const payload = {
+      name: trimmedName,
+      region: formState.region,
+      product: formState.product,
+      tier: formState.tier,
+      schemes: formState.schemes,
+      customSchemeLogo: formState.customSchemeLogo,
+      currentStatus: formState.status,
+      summary: formState.summary.trim() || "New client added.",
+    };
+
+    if (editingId) {
+      updateClient(editingId, payload);
+      setEditingId(null);
+      setFormState(createEmptyForm());
+      return;
+    }
+
     addClient({
       id: `client-${Date.now()}`,
-      name: trimmedName,
-      region,
-      product,
-      tier,
-      schemes,
-      customSchemeLogo,
-      currentStatus: status,
-      summary: summary.trim() || "New client added.",
+      ...payload,
       metrics: defaultMetrics,
       history: [
         {
           week: today,
-          status,
-          note: summary.trim() || "Initial onboarding update.",
+          status: formState.status,
+          note: formState.summary.trim() || "Initial onboarding update.",
         },
       ],
     });
@@ -81,22 +97,48 @@ export default function ConfigPage() {
   const handleLogoUpload = (event) => {
     const [file] = event.target.files || [];
     if (!file) {
-      setCustomSchemeLogo("");
+      setFormState((prev) => ({ ...prev, customSchemeLogo: "" }));
       return;
     }
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
-        setCustomSchemeLogo(reader.result);
+        setFormState((prev) => ({ ...prev, customSchemeLogo: reader.result }));
       }
     };
     reader.readAsDataURL(file);
   };
 
+  const handleEditClient = (client) => {
+    setEditingId(client.id);
+    setFormState({
+      name: client.name ?? "",
+      region: client.region ?? REGIONS[0],
+      product: client.product ?? PRODUCTS[0],
+      tier: client.tier ?? TIERS[0],
+      status: client.currentStatus ?? "Green",
+      summary: client.summary ?? "",
+      schemes: client.schemes ?? [],
+      customSchemeLogo: client.customSchemeLogo ?? "",
+    });
+  };
+
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setFormState(createEmptyForm());
+  };
+
+  const handleDeleteClient = (clientId) => {
+    removeClient(clientId);
+    if (editingId === clientId) {
+      handleCancelEdit();
+    }
+  };
+
   return (
-    <section className="d-grid gap-3">
+    <section className="d-grid gap-4">
       <div>
-        <h2 className="mb-1">Add a new client</h2>
+        <h2 className="mb-1">{editingId ? "Edit client" : "Add a new client"}</h2>
         <p className="text-body-secondary mb-0">
           Configure region, product, tier, and an initial weekly status note.
         </p>
@@ -112,8 +154,10 @@ export default function ConfigPage() {
                 id="client-name"
                 className="form-control"
                 type="text"
-                value={name}
-                onChange={(event) => setName(event.target.value)}
+                value={formState.name}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, name: event.target.value }))
+                }
                 placeholder="Client name"
               />
             </div>
@@ -124,8 +168,10 @@ export default function ConfigPage() {
               <select
                 id="client-region"
                 className="form-select"
-                value={region}
-                onChange={(event) => setRegion(event.target.value)}
+                value={formState.region}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, region: event.target.value }))
+                }
               >
                 {REGIONS.map((option) => (
                   <option key={option} value={option}>
@@ -141,8 +187,10 @@ export default function ConfigPage() {
               <select
                 id="client-product"
                 className="form-select"
-                value={product}
-                onChange={(event) => setProduct(event.target.value)}
+                value={formState.product}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, product: event.target.value }))
+                }
               >
                 {PRODUCTS.map((option) => (
                   <option key={option} value={option}>
@@ -158,8 +206,10 @@ export default function ConfigPage() {
               <select
                 id="client-tier"
                 className="form-select"
-                value={tier}
-                onChange={(event) => setTier(event.target.value)}
+                value={formState.tier}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, tier: event.target.value }))
+                }
               >
                 {TIERS.map((option) => (
                   <option key={option} value={option}>
@@ -175,8 +225,10 @@ export default function ConfigPage() {
               <select
                 id="client-status"
                 className="form-select"
-                value={status}
-                onChange={(event) => setStatus(event.target.value)}
+                value={formState.status}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, status: event.target.value }))
+                }
               >
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option} value={option}>
@@ -193,8 +245,10 @@ export default function ConfigPage() {
                 id="client-summary"
                 className="form-control"
                 rows={3}
-                value={summary}
-                onChange={(event) => setSummary(event.target.value)}
+                value={formState.summary}
+                onChange={(event) =>
+                  setFormState((prev) => ({ ...prev, summary: event.target.value }))
+                }
                 placeholder="Short weekly note..."
               />
             </div>
@@ -208,8 +262,13 @@ export default function ConfigPage() {
                         className="form-check-input"
                         type="checkbox"
                         id={`scheme-${scheme}`}
-                        checked={schemes.includes(scheme)}
-                        onChange={() => setSchemes((prev) => toggleScheme(prev, scheme))}
+                        checked={formState.schemes.includes(scheme)}
+                        onChange={() =>
+                          setFormState((prev) => ({
+                            ...prev,
+                            schemes: toggleScheme(prev.schemes, scheme),
+                          }))
+                        }
                       />
                       <label className="form-check-label" htmlFor={`scheme-${scheme}`}>
                         {scheme}
@@ -230,7 +289,7 @@ export default function ConfigPage() {
                 accept="image/*"
                 onChange={handleLogoUpload}
               />
-              {customSchemeLogo ? (
+              {formState.customSchemeLogo ? (
                 <p className="text-body-secondary small mb-0 mt-2">
                   Custom logo will be saved with this client.
                 </p>
@@ -238,12 +297,59 @@ export default function ConfigPage() {
             </div>
           </div>
         </div>
-        <div className="card-footer bg-white border-0">
+        <div className="card-footer bg-white border-0 d-flex flex-wrap gap-2">
           <button className="btn btn-primary" type="submit">
-            Save client
+            {editingId ? "Save changes" : "Save client"}
           </button>
+          {editingId ? (
+            <button className="btn btn-outline-secondary" type="button" onClick={handleCancelEdit}>
+              Cancel
+            </button>
+          ) : null}
         </div>
       </form>
+
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <h3 className="h5">Manage clients</h3>
+          <p className="text-body-secondary mb-3">
+            Edit client details or remove inactive accounts.
+          </p>
+          <div className="row row-cols-1 row-cols-lg-2 g-3">
+            {clients.map((client) => (
+              <div key={client.id} className="col">
+                <div className="border rounded-3 p-3 h-100">
+                  <div className="d-flex justify-content-between align-items-start gap-2">
+                    <div>
+                      <h4 className="h6 mb-1">{client.name}</h4>
+                      <p className="text-body-secondary small mb-0">
+                        {client.region} · {client.product} · {client.tier}
+                      </p>
+                    </div>
+                    <span className="badge text-bg-light border">{client.currentStatus}</span>
+                  </div>
+                  <div className="d-flex flex-wrap gap-2 mt-3">
+                    <button
+                      className="btn btn-outline-primary btn-sm"
+                      type="button"
+                      onClick={() => handleEditClient(client)}
+                    >
+                      Edit
+                    </button>
+                    <button
+                      className="btn btn-outline-danger btn-sm"
+                      type="button"
+                      onClick={() => handleDeleteClient(client.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </section>
   );
 }
