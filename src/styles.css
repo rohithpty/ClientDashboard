@@ -21,3 +21,19 @@ body {
 .card-footer .btn {
   font-weight: 600;
 }
+
+.scheme-logos {
+  display: inline-flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.scheme-logo {
+  width: 44px;
+  height: 28px;
+  object-fit: contain;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.85);
+  padding: 2px;
+}

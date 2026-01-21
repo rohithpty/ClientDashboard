@@ -1,4 +1,21 @@
 import { Link } from "react-router-dom";
+import afsLogo from "../assets/schemes/afs.svg";
+import jetcoLogo from "../assets/schemes/jetco.svg";
+import jonetCortexLogo from "../assets/schemes/jonet-cortex.svg";
+import madaLogo from "../assets/schemes/mada.svg";
+import mastercardLogo from "../assets/schemes/mastercard.svg";
+import uaeLogo from "../assets/schemes/uae.svg";
+import visaLogo from "../assets/schemes/visa.svg";
+
+const schemeLogoMap = {
+  Mastercard: mastercardLogo,
+  Visa: visaLogo,
+  UAE: uaeLogo,
+  "Jonet/Cortex": jonetCortexLogo,
+  MADA: madaLogo,
+  AFS: afsLogo,
+  Jetco: jetcoLogo,
+};
 
 const statusCardClass = (status) => {
   if (status === "Red") {
@@ -21,15 +38,35 @@ export default function ClientCard({ client }) {
   const ticketSummary = `L1: ${client.metrics.tickets.L1}, L2: ${client.metrics.tickets.L2}, L3: ${client.metrics.tickets.L3} | >30d: ${client.metrics.tickets.olderThan30}, >60d: ${client.metrics.tickets.olderThan60}`;
   const totalTickets =
     client.metrics.tickets.L1 + client.metrics.tickets.L2 + client.metrics.tickets.L3;
+  const schemes = client.schemes ?? [];
 
   return (
     <article className={statusCardClass(client.currentStatus)}>
       <div className="card-body d-flex flex-column gap-3">
-        <div>
-          <h3 className="h5 mb-1">{client.name}</h3>
-          <p className="small mb-0">
-            {client.region} · {client.product} · {client.tier}
-          </p>
+        <div className="d-flex justify-content-between gap-2">
+          <div>
+            <h3 className="h5 mb-1">{client.name}</h3>
+            <p className="small mb-0">
+              {client.region} · {client.product} · {client.tier}
+            </p>
+          </div>
+          <div className="scheme-logos">
+            {schemes.map((scheme) => (
+              <img
+                key={scheme}
+                src={schemeLogoMap[scheme]}
+                alt={`${scheme} logo`}
+                className="scheme-logo"
+              />
+            ))}
+            {client.customSchemeLogo ? (
+              <img
+                src={client.customSchemeLogo}
+                alt="Custom scheme logo"
+                className="scheme-logo"
+              />
+            ) : null}
+          </div>
         </div>
         <p className="card-text mb-0">{client.summary}</p>
         <div className="row text-center g-2">
