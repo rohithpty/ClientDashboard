@@ -1,13 +1,20 @@
 import { Link } from "react-router-dom";
 
-const statusBadgeClass = (status) => {
+const statusCardClass = (status) => {
   if (status === "Red") {
-    return "badge rounded-pill text-bg-danger";
+    return "card h-100 shadow-sm bg-danger text-white";
   }
   if (status === "Amber") {
-    return "badge rounded-pill text-bg-warning";
+    return "card h-100 shadow-sm bg-warning text-dark";
   }
-  return "badge rounded-pill text-bg-success";
+  return "card h-100 shadow-sm bg-success text-white";
+};
+
+const statusButtonClass = (status) => {
+  if (status === "Amber") {
+    return "btn btn-dark btn-sm";
+  }
+  return "btn btn-light btn-sm";
 };
 
 export default function ClientCard({ client }) {
@@ -16,51 +23,46 @@ export default function ClientCard({ client }) {
     client.metrics.tickets.L1 + client.metrics.tickets.L2 + client.metrics.tickets.L3;
 
   return (
-    <article className="card h-100 shadow-sm">
+    <article className={statusCardClass(client.currentStatus)}>
       <div className="card-body d-flex flex-column gap-3">
-        <div className="d-flex align-items-start justify-content-between gap-2">
-          <div>
-            <h3 className="h5 mb-1">{client.name}</h3>
-            <p className="text-body-secondary small mb-0">
-              {client.region} · {client.product} · {client.tier}
-            </p>
-          </div>
-          <span className={statusBadgeClass(client.currentStatus)}>
-            {client.currentStatus}
-          </span>
+        <div>
+          <h3 className="h5 mb-1">{client.name}</h3>
+          <p className="small mb-0">
+            {client.region} · {client.product} · {client.tier}
+          </p>
         </div>
         <p className="card-text mb-0">{client.summary}</p>
         <div className="row text-center g-2">
           <div className="col-6 col-lg-3">
-            <div className="border rounded-3 py-2 h-100">
-              <div className="text-body-secondary small">Tickets</div>
+            <div className="border border-opacity-25 rounded-3 py-2 h-100">
+              <div className="small">Tickets</div>
               <div className="fw-semibold" title={ticketSummary}>
                 {totalTickets}
               </div>
             </div>
           </div>
           <div className="col-6 col-lg-3">
-            <div className="border rounded-3 py-2 h-100">
-              <div className="text-body-secondary small">JIRA</div>
+            <div className="border border-opacity-25 rounded-3 py-2 h-100">
+              <div className="small">JIRA</div>
               <div className="fw-semibold">{client.metrics.jiras.openCount}</div>
             </div>
           </div>
           <div className="col-6 col-lg-3">
-            <div className="border rounded-3 py-2 h-100">
-              <div className="text-body-secondary small">Requests</div>
+            <div className="border border-opacity-25 rounded-3 py-2 h-100">
+              <div className="small">Requests</div>
               <div className="fw-semibold">{client.metrics.requests}</div>
             </div>
           </div>
           <div className="col-6 col-lg-3">
-            <div className="border rounded-3 py-2 h-100">
-              <div className="text-body-secondary small">Incidents</div>
+            <div className="border border-opacity-25 rounded-3 py-2 h-100">
+              <div className="small">Incidents</div>
               <div className="fw-semibold">{client.metrics.incidents}</div>
             </div>
           </div>
         </div>
       </div>
-      <div className="card-footer bg-white border-0 pt-0">
-        <Link className="btn btn-outline-primary btn-sm" to={`/clients/${client.id}`}>
+      <div className="card-footer bg-transparent border-0 pt-0">
+        <Link className={statusButtonClass(client.currentStatus)} to={`/clients/${client.id}`}>
           View details →
         </Link>
       </div>
