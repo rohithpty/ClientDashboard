@@ -78,14 +78,14 @@ export default function DashboardPage() {
 
   return (
     <section className="d-grid gap-4">
-      <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
+      <div className="d-flex flex-wrap justify-content-between align-items-start gap-3 dashboard-header">
         <div>
           <h2 className="mb-1">Client Overview</h2>
-          <p className="text-body-secondary mb-0">
+          <p className="dashboard-subtitle mb-0">
             Sorted by health status so critical accounts surface first.
           </p>
         </div>
-        <Link className="btn btn-primary" to="/config">
+        <Link className="btn btn-amber" to="/config">
           Add client
         </Link>
       </div>

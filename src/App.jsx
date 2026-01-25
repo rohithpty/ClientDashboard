@@ -4,15 +4,15 @@ import ClientDetailPage from "./pages/ClientDetailPage.jsx";
 import ConfigPage from "./pages/ConfigPage.jsx";
 
 const getNavClass = ({ isActive }) =>
-  `nav-link fw-semibold ${isActive ? "active" : ""}`.trim();
+  `nav-link app-nav-link fw-semibold ${isActive ? "active" : ""}`.trim();
 
 export default function App() {
   return (
-    <div className="app-shell bg-light min-vh-100">
-      <header className="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+    <div className="app-shell">
+      <header className="app-navbar navbar navbar-expand-lg sticky-top">
         <div className="container-fluid px-4">
-          <div>
-            <p className="text-uppercase text-secondary small mb-1">Client Health</p>
+          <div className="d-flex flex-column">
+            <span className="app-eyebrow text-uppercase">Client Health</span>
             <span className="navbar-brand mb-0 h1">RAG Status Dashboard</span>
           </div>
           <nav className="navbar-nav ms-auto flex-row gap-2">
