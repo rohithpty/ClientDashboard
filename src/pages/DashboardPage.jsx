@@ -21,7 +21,7 @@ const parseCsvDate = (value) => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 
-const buildIncidentSummary = (records, client) => {
+const buildTicketSummary = (records, client) => {
   const aliases = client.aliases ?? [];
   const candidateNames = [client.name, ...aliases].map(normalizeName).filter(Boolean);
   const counts = {
@@ -68,9 +68,11 @@ const buildIncidentSummary = (records, client) => {
 export default function DashboardPage() {
   const { clients } = useClients();
   const incidentRecords = getReportData("incidents").records;
+  const supportRecords = getReportData("support-tickets").records;
   const clientsWithSummaries = clients.map((client) => ({
     ...client,
-    incidentSummary: buildIncidentSummary(incidentRecords, client),
+    incidentSummary: buildTicketSummary(incidentRecords, client),
+    supportSummary: buildTicketSummary(supportRecords, client),
   }));
   const sortedClients = sortByStatus(clientsWithSummaries);
 
