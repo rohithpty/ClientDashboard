@@ -37,3 +37,12 @@ body {
   background: rgba(255, 255, 255, 0.85);
   padding: 2px;
 }
+
+.client-logo {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 4px;
+}

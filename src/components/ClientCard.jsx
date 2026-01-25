@@ -44,11 +44,16 @@ export default function ClientCard({ client }) {
     <article className={statusCardClass(client.currentStatus)}>
       <div className="card-body d-flex flex-column gap-3">
         <div className="d-flex justify-content-between gap-2">
-          <div>
-            <h3 className="h5 mb-1">{client.name}</h3>
-            <p className="small mb-0">
-              {client.region} · {client.product} · {client.tier}
-            </p>
+          <div className="d-flex gap-2 align-items-start">
+            {client.clientLogo ? (
+              <img src={client.clientLogo} alt={`${client.name} logo`} className="client-logo" />
+            ) : null}
+            <div>
+              <h3 className="h5 mb-1">{client.name}</h3>
+              <p className="small mb-0">
+                {client.region} · {client.product} · {client.tier}
+              </p>
+            </div>
           </div>
           <div className="scheme-logos">
             {schemes.map((scheme) => (

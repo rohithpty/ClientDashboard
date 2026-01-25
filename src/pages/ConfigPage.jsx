@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClients } from "../state/ClientsContext.jsx";
 
@@ -46,13 +46,16 @@ const createEmptyForm = () => ({
   summary: "",
   schemes: [],
   customSchemeLogo: "",
+  clientLogo: "",
 });
 
 export default function ConfigPage() {
   const navigate = useNavigate();
-  const { clients, addClient, updateClient, removeClient } = useClients();
+  const { clients, addClient, updateClient, removeClient, replaceClients } = useClients();
   const [formState, setFormState] = useState(createEmptyForm);
   const [editingId, setEditingId] = useState(null);
+  const [importError, setImportError] = useState("");
+  const importInputRef = useRef(null);
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -68,6 +71,7 @@ export default function ConfigPage() {
       tier: formState.tier,
       schemes: formState.schemes,
       customSchemeLogo: formState.customSchemeLogo,
+      clientLogo: formState.clientLogo,
       currentStatus: formState.status,
       summary: formState.summary.trim() || "New client added.",
     };
@@ -94,16 +98,16 @@ export default function ConfigPage() {
     navigate("/");
   };
 
-  const handleLogoUpload = (event) => {
+  const handleLogoUpload = (event, field) => {
     const [file] = event.target.files || [];
     if (!file) {
-      setFormState((prev) => ({ ...prev, customSchemeLogo: "" }));
+      setFormState((prev) => ({ ...prev, [field]: "" }));
       return;
     }
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === "string") {
-        setFormState((prev) => ({ ...prev, customSchemeLogo: reader.result }));
+        setFormState((prev) => ({ ...prev, [field]: reader.result }));
       }
     };
     reader.readAsDataURL(file);
@@ -120,6 +124,7 @@ export default function ConfigPage() {
       summary: client.summary ?? "",
       schemes: client.schemes ?? [],
       customSchemeLogo: client.customSchemeLogo ?? "",
+      clientLogo: client.clientLogo ?? "",
     });
   };
 
@@ -133,6 +138,42 @@ export default function ConfigPage() {
     if (editingId === clientId) {
       handleCancelEdit();
     }
+  };
+
+  const handleExport = () => {
+    const blob = new Blob([JSON.stringify(clients, null, 2)], {
+      type: "application/json",
+    });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = "clients-export.json";
+    anchor.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleImport = (event) => {
+    const [file] = event.target.files || [];
+    if (!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        return;
+      }
+      try {
+        const parsed = JSON.parse(reader.result);
+        if (!Array.isArray(parsed)) {
+          throw new Error("Import file must be an array of clients.");
+        }
+        replaceClients(parsed);
+        setImportError("");
+      } catch (error) {
+        setImportError(error.message || "Unable to import data.");
+      }
+    };
+    reader.readAsText(file);
   };
 
   return (
@@ -279,6 +320,35 @@ export default function ConfigPage() {
               </div>
             </div>
             <div className="col-12">
+              <label className="form-label" htmlFor="client-logo">
+                Client logo (optional)
+              </label>
+              <input
+                id="client-logo"
+                className="form-control"
+                type="file"
+                accept="image/*"
+                onChange={(event) => handleLogoUpload(event, "clientLogo")}
+              />
+              {formState.clientLogo ? (
+                <div className="mt-2 d-flex align-items-center gap-2">
+                  <img src={formState.clientLogo} alt="Client logo" className="client-logo" />
+                  <button
+                    className="btn btn-outline-secondary btn-sm"
+                    type="button"
+                    onClick={() =>
+                      setFormState((prev) => ({
+                        ...prev,
+                        clientLogo: "",
+                      }))
+                    }
+                  >
+                    Remove logo
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <div className="col-12">
               <label className="form-label" htmlFor="scheme-logo">
                 Upload scheme logo (optional)
               </label>
@@ -287,7 +357,7 @@ export default function ConfigPage() {
                 className="form-control"
                 type="file"
                 accept="image/*"
-                onChange={handleLogoUpload}
+                onChange={(event) => handleLogoUpload(event, "customSchemeLogo")}
               />
               {formState.customSchemeLogo ? (
                 <p className="text-body-secondary small mb-0 mt-2">
@@ -311,20 +381,55 @@ export default function ConfigPage() {
 
       <div className="card shadow-sm">
         <div className="card-body">
-          <h3 className="h5">Manage clients</h3>
-          <p className="text-body-secondary mb-3">
-            Edit client details or remove inactive accounts.
-          </p>
-          <div className="row row-cols-1 row-cols-lg-2 g-3">
+          <div className="d-flex flex-wrap justify-content-between align-items-start gap-2">
+            <div>
+              <h3 className="h5">Manage clients</h3>
+              <p className="text-body-secondary mb-0">
+                Edit client details or remove inactive accounts.
+              </p>
+            </div>
+            <div className="d-flex flex-wrap gap-2">
+              <button className="btn btn-outline-primary btn-sm" type="button" onClick={handleExport}>
+                Export data
+              </button>
+              <button
+                className="btn btn-outline-secondary btn-sm"
+                type="button"
+                onClick={() => importInputRef.current?.click()}
+              >
+                Import data
+              </button>
+              <input
+                ref={importInputRef}
+                className="d-none"
+                type="file"
+                accept="application/json"
+                onChange={handleImport}
+              />
+            </div>
+          </div>
+          {importError ? (
+            <p className="text-danger small mt-2 mb-0">{importError}</p>
+          ) : null}
+          <div className="row row-cols-1 row-cols-lg-2 g-3 mt-1">
             {clients.map((client) => (
               <div key={client.id} className="col">
                 <div className="border rounded-3 p-3 h-100">
                   <div className="d-flex justify-content-between align-items-start gap-2">
-                    <div>
-                      <h4 className="h6 mb-1">{client.name}</h4>
-                      <p className="text-body-secondary small mb-0">
-                        {client.region} · {client.product} · {client.tier}
-                      </p>
+                    <div className="d-flex gap-2 align-items-start">
+                      {client.clientLogo ? (
+                        <img
+                          src={client.clientLogo}
+                          alt={`${client.name} logo`}
+                          className="client-logo"
+                        />
+                      ) : null}
+                      <div>
+                        <h4 className="h6 mb-1">{client.name}</h4>
+                        <p className="text-body-secondary small mb-0">
+                          {client.region} · {client.product} · {client.tier}
+                        </p>
+                      </div>
                     </div>
                     <span className="badge text-bg-light border">{client.currentStatus}</span>
                   </div>
