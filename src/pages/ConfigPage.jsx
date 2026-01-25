@@ -58,6 +58,49 @@ const REPORT_IMPORTS = [
   { type: "implementation-requests", label: "Implementation Requests" },
 ];
 
+const RECORDS_PER_PAGE = 10;
+const AGE_BUCKETS = [
+  { label: "0-7 days", min: 0, max: 7 },
+  { label: "8-30 days", min: 8, max: 30 },
+  { label: "31-90 days", min: 31, max: 90 },
+  { label: "91+ days", min: 91, max: Number.POSITIVE_INFINITY },
+];
+
+const parseCsvDate = (value) => {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.replace(" ", "T");
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getAgeBucket = (days) =>
+  AGE_BUCKETS.find((bucket) => days >= bucket.min && days <= bucket.max)?.label ??
+  "Unknown";
+
+const buildSummary = (records) => {
+  const statusCounts = records.reduce((acc, record) => {
+    const status = record.ticketStatus || "Unknown";
+    acc[status] = (acc[status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const ageCounts = records.reduce((acc, record) => {
+    const requested = parseCsvDate(record.requested);
+    if (!requested) {
+      acc.Unknown = (acc.Unknown ?? 0) + 1;
+      return acc;
+    }
+    const ageInDays = Math.floor((Date.now() - requested.getTime()) / 86400000);
+    const bucket = getAgeBucket(ageInDays);
+    acc[bucket] = (acc[bucket] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return { statusCounts, ageCounts };
+};
+
 export default function ConfigPage() {
   const navigate = useNavigate();
   const { clients, addClient, updateClient, removeClient, replaceClients } = useClients();
@@ -72,6 +115,9 @@ export default function ConfigPage() {
       return acc;
     }, {})
   );
+  const [activeReportType, setActiveReportType] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
 
   const reportSummary = useMemo(
     () =>
@@ -81,6 +127,35 @@ export default function ConfigPage() {
         lastImportedAt: reportData[report.type]?.lastImportedAt ?? null,
       })),
     [reportData]
+  );
+
+  const activeReport = reportSummary.find((report) => report.type === activeReportType) ?? null;
+  const filteredRecords = useMemo(() => {
+    if (!activeReport) {
+      return [];
+    }
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return activeReport.records;
+    }
+    return activeReport.records.filter((record) =>
+      Object.values(record).some((value) =>
+        String(value ?? "")
+          .toLowerCase()
+          .includes(normalizedSearch)
+      )
+    );
+  }, [activeReport, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / RECORDS_PER_PAGE));
+  const pagedRecords = filteredRecords.slice(
+    (page - 1) * RECORDS_PER_PAGE,
+    page * RECORDS_PER_PAGE
+  );
+
+  const summaryData = useMemo(
+    () => (activeReport ? buildSummary(activeReport.records) : null),
+    [activeReport]
   );
 
   const handleSubmit = (event) => {
@@ -222,6 +297,16 @@ export default function ConfigPage() {
     reader.readAsText(file);
   };
 
+  const handleOpenReport = (type) => {
+    setActiveReportType(type);
+    setSearchTerm("");
+    setPage(1);
+  };
+
+  const handleCloseReport = () => {
+    setActiveReportType(null);
+  };
+
   return (
     <section className="d-grid gap-4">
       <div>
@@ -268,6 +353,7 @@ export default function ConfigPage() {
                   <th scope="col">Report type</th>
                   <th scope="col">Records</th>
                   <th scope="col">Last imported</th>
+                  <th scope="col">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -276,6 +362,20 @@ export default function ConfigPage() {
                     <td>{report.label}</td>
                     <td>{report.records.length}</td>
                     <td>{report.lastImportedAt || "Not imported yet"}</td>
+                    <td>
+                      {["incidents", "support-tickets"].includes(report.type) ? (
+                        <button
+                          className="btn btn-link btn-sm px-0"
+                          type="button"
+                          onClick={() => handleOpenReport(report.type)}
+                          disabled={report.records.length === 0}
+                        >
+                          View data
+                        </button>
+                      ) : (
+                        <span className="text-body-secondary small">Coming soon</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -554,6 +654,134 @@ export default function ConfigPage() {
           </div>
         </div>
       </div>
+      {activeReport ? (
+        <div className="modal d-block" role="dialog" aria-modal="true">
+          <div className="modal-dialog modal-xl modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header">
+                <div>
+                  <h5 className="modal-title mb-1">{activeReport.label} data</h5>
+                  <p className="text-body-secondary small mb-0">
+                    Showing {filteredRecords.length} records
+                  </p>
+                </div>
+                <button className="btn-close" type="button" onClick={handleCloseReport} />
+              </div>
+              <div className="modal-body">
+                {summaryData ? (
+                  <div className="row g-3 mb-4">
+                    <div className="col-md-6">
+                      <div className="border rounded-3 p-3 h-100">
+                        <h6 className="mb-2">{activeReport.label} by status</h6>
+                        <ul className="list-unstyled mb-0">
+                          {Object.entries(summaryData.statusCounts).map(([status, count]) => (
+                            <li key={status} className="d-flex justify-content-between">
+                              <span>{status}</span>
+                              <span className="fw-semibold">{count}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="border rounded-3 p-3 h-100">
+                        <h6 className="mb-2">{activeReport.label} by age</h6>
+                        <ul className="list-unstyled mb-0">
+                          {Object.entries(summaryData.ageCounts).map(([bucket, count]) => (
+                            <li key={bucket} className="d-flex justify-content-between">
+                              <span>{bucket}</span>
+                              <span className="fw-semibold">{count}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                  <input
+                    className="form-control w-auto flex-grow-1"
+                    type="search"
+                    placeholder="Search tickets..."
+                    value={searchTerm}
+                    onChange={(event) => {
+                      setSearchTerm(event.target.value);
+                      setPage(1);
+                    }}
+                  />
+                  <div className="text-body-secondary small">
+                    Page {page} of {totalPages}
+                  </div>
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-sm align-middle">
+                    <thead>
+                      <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Status</th>
+                        <th scope="col">Organization</th>
+                        <th scope="col">Requester</th>
+                        <th scope="col">Subject</th>
+                        <th scope="col">Priority</th>
+                        <th scope="col">SLA</th>
+                        <th scope="col">Requested</th>
+                        <th scope="col">Updated</th>
+                        <th scope="col">Ticket form</th>
+                        <th scope="col">Org tier</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pagedRecords.map((record) => (
+                        <tr key={record.id}>
+                          <td>{record.id}</td>
+                          <td>{record.ticketStatus}</td>
+                          <td>{record.organization}</td>
+                          <td>{record.requester}</td>
+                          <td>{record.subject}</td>
+                          <td>{record.priority}</td>
+                          <td>{record.sla}</td>
+                          <td>{record.requested}</td>
+                          <td>{record.updated}</td>
+                          <td>{record.ticketForm}</td>
+                          <td>{record.orgTier}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {filteredRecords.length === 0 ? (
+                  <p className="text-body-secondary small mb-0">No records found.</p>
+                ) : null}
+              </div>
+              <div className="modal-footer">
+                <div className="d-flex flex-wrap gap-2 w-100 justify-content-between align-items-center">
+                  <div className="btn-group" role="group">
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      type="button"
+                      onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                      disabled={page === 1}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      type="button"
+                      onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={page === totalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                  <button className="btn btn-primary btn-sm" type="button" onClick={handleCloseReport}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
