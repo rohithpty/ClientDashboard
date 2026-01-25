@@ -19,12 +19,12 @@ const schemeLogoMap = {
 
 const statusCardClass = (status) => {
   if (status === "Red") {
-    return "card h-100 shadow-sm bg-danger text-white";
+    return "card h-100 shadow-sm border border-2 border-danger";
   }
   if (status === "Amber") {
-    return "card h-100 shadow-sm bg-warning text-dark";
+    return "card h-100 shadow-sm border border-2 border-warning";
   }
-  return "card h-100 shadow-sm bg-success text-white";
+  return "card h-100 shadow-sm border border-2 border-success";
 };
 
 const statusButtonClass = (status) => {
@@ -46,6 +46,13 @@ export default function ClientCard({ client }) {
     over60: 0,
     over90: 0,
   };
+  const summaryTextClass =
+    client.currentStatus === "Red"
+      ? "text-danger"
+      : client.currentStatus === "Amber"
+        ? "text-warning"
+        : "text-success";
+  const incidentOver30Class = incidentSummary.over30 > 0 ? "text-warning" : "text-muted";
 
   return (
     <article className={statusCardClass(client.currentStatus)}>
@@ -80,7 +87,7 @@ export default function ClientCard({ client }) {
             ) : null}
           </div>
         </div>
-        <p className="card-text mb-0">{client.summary}</p>
+        <p className={`card-text mb-0 ${summaryTextClass}`}>{client.summary}</p>
         <div className="row text-center g-2">
           <div className="col-6 col-lg-3">
             <div className="border border-opacity-25 rounded-3 py-2 h-100">
@@ -118,40 +125,40 @@ export default function ClientCard({ client }) {
                 Incidents
               </div>
               <div className="d-grid gap-1 small">
-                <div className="d-flex align-items-center justify-content-between">
+                <div className="d-flex align-items-center justify-content-between text-danger">
                   <span className="d-flex align-items-center gap-1">
-                    <i className="bi bi-alarm text-danger" aria-hidden="true"></i>
+                    <i className="bi bi-alarm" aria-hidden="true"></i>
                     RCA
                   </span>
-                  <span className="fw-semibold text-danger">{incidentSummary.rca}</span>
+                  <span className="fw-semibold">{incidentSummary.rca}</span>
                 </div>
-                <div className="d-flex align-items-center justify-content-between">
+                <div className={`d-flex align-items-center justify-content-between ${incidentOver30Class}`}>
                   <span className="d-flex align-items-center gap-1">
-                    <i className="bi bi-calendar2 text-warning" aria-hidden="true"></i>
+                    <i className="bi bi-calendar2" aria-hidden="true"></i>
                     &gt;7
                   </span>
-                  <span className="fw-semibold text-warning">{incidentSummary.over7}</span>
+                  <span className="fw-semibold">{incidentSummary.over7}</span>
                 </div>
-                <div className="d-flex align-items-center justify-content-between">
+                <div className={`d-flex align-items-center justify-content-between ${incidentOver30Class}`}>
                   <span className="d-flex align-items-center gap-1">
-                    <i className="bi bi-calendar2 text-warning" aria-hidden="true"></i>
+                    <i className="bi bi-calendar2" aria-hidden="true"></i>
                     &gt;30
                   </span>
-                  <span className="fw-semibold text-warning">{incidentSummary.over30}</span>
+                  <span className="fw-semibold">{incidentSummary.over30}</span>
                 </div>
-                <div className="d-flex align-items-center justify-content-between">
+                <div className={`d-flex align-items-center justify-content-between ${incidentOver30Class}`}>
                   <span className="d-flex align-items-center gap-1">
-                    <i className="bi bi-calendar2 text-warning" aria-hidden="true"></i>
+                    <i className="bi bi-calendar2" aria-hidden="true"></i>
                     &gt;60
                   </span>
-                  <span className="fw-semibold text-warning">{incidentSummary.over60}</span>
+                  <span className="fw-semibold">{incidentSummary.over60}</span>
                 </div>
-                <div className="d-flex align-items-center justify-content-between">
+                <div className={`d-flex align-items-center justify-content-between ${incidentOver30Class}`}>
                   <span className="d-flex align-items-center gap-1">
-                    <i className="bi bi-calendar2 text-danger" aria-hidden="true"></i>
+                    <i className="bi bi-calendar2" aria-hidden="true"></i>
                     &gt;90
                   </span>
-                  <span className="fw-semibold text-danger">{incidentSummary.over90}</span>
+                  <span className="fw-semibold">{incidentSummary.over90}</span>
                 </div>
               </div>
             </div>
