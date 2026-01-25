@@ -25,7 +25,7 @@ export default function App() {
           </nav>
         </div>
       </header>
-      <main className="container py-4">
+      <main className="container-fluid px-4 py-4">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/clients/:id" element={<ClientDetailPage />} />
