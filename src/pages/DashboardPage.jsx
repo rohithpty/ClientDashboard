@@ -76,6 +76,8 @@ export default function DashboardPage() {
   const [regionFilter, setRegionFilter] = useState("All");
   const [productFilter, setProductFilter] = useState("All");
   const [environmentFilter, setEnvironmentFilter] = useState("All");
+  const [tamFilter, setTamFilter] = useState("All");
+  const [accountManagerFilter, setAccountManagerFilter] = useState("All");
   const { clients } = useClients();
   const incidentRecords = getReportData("incidents").records;
   const supportRecords = getReportData("support-tickets").records;
@@ -115,6 +117,24 @@ export default function DashboardPage() {
       ).sort(),
     [clientsWithSummaries],
   );
+  const technicalAccountManagers = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          clientsWithSummaries.map(
+            (client) => client.technicalAccountManager ?? "Unassigned",
+          ),
+        ),
+      ).sort(),
+    [clientsWithSummaries],
+  );
+  const accountManagers = useMemo(
+    () =>
+      Array.from(
+        new Set(clientsWithSummaries.map((client) => client.accountManager ?? "Unassigned")),
+      ).sort(),
+    [clientsWithSummaries],
+  );
 
   const filteredClients = useMemo(() => {
     return sortedClients.filter((client) => {
@@ -133,11 +153,29 @@ export default function DashboardPage() {
       ) {
         return false;
       }
+      if (
+        tamFilter !== "All" &&
+        (client.technicalAccountManager ?? "Unassigned") !== tamFilter
+      ) {
+        return false;
+      }
+      if (
+        accountManagerFilter !== "All" &&
+        (client.accountManager ?? "Unassigned") !== accountManagerFilter
+      ) {
+        return false;
+      }
       return true;
     });
-  }, [sortedClients, statusFilter, regionFilter, productFilter, environmentFilter]);
-
-  const showFilters = statusFilter !== "All";
+  }, [
+    sortedClients,
+    statusFilter,
+    regionFilter,
+    productFilter,
+    environmentFilter,
+    tamFilter,
+    accountManagerFilter,
+  ]);
 
   return (
     <section className="d-grid gap-4">
@@ -166,7 +204,7 @@ export default function DashboardPage() {
             ))}
           </div>
         </div>
-        <div className={`dashboard-filters ${showFilters ? "is-visible" : ""}`}>
+        <div className="dashboard-filters">
           <div className="filter-group">
             <label className="filter-label" htmlFor="region-filter">
               Region
@@ -221,6 +259,42 @@ export default function DashboardPage() {
               ))}
             </select>
           </div>
+          <div className="filter-group">
+            <label className="filter-label" htmlFor="tam-filter">
+              Technical AM
+            </label>
+            <select
+              id="tam-filter"
+              className="form-select form-select-sm"
+              value={tamFilter}
+              onChange={(event) => setTamFilter(event.target.value)}
+            >
+              <option value="All">All TAMs</option>
+              {technicalAccountManagers.map((manager) => (
+                <option key={manager} value={manager}>
+                  {manager}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="filter-group">
+            <label className="filter-label" htmlFor="account-manager-filter">
+              Account manager
+            </label>
+            <select
+              id="account-manager-filter"
+              className="form-select form-select-sm"
+              value={accountManagerFilter}
+              onChange={(event) => setAccountManagerFilter(event.target.value)}
+            >
+              <option value="All">All AMs</option>
+              {accountManagers.map((manager) => (
+                <option key={manager} value={manager}>
+                  {manager}
+                </option>
+              ))}
+            </select>
+          </div>
           <button
             className="btn btn-sm btn-outline-light filter-reset"
             type="button"
@@ -228,6 +302,8 @@ export default function DashboardPage() {
               setRegionFilter("All");
               setProductFilter("All");
               setEnvironmentFilter("All");
+              setTamFilter("All");
+              setAccountManagerFilter("All");
             }}
           >
             Reset filters
