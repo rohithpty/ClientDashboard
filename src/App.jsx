@@ -20,7 +20,7 @@ export default function App() {
               Dashboard
             </NavLink>
             <NavLink className={getNavClass} to="/config">
-              Manage Clients
+              Admin Center
             </NavLink>
           </nav>
         </div>

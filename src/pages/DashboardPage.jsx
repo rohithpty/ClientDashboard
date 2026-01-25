@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import ClientCard from "../components/ClientCard.jsx";
 import { useClients } from "../state/ClientsContext.jsx";
+import { getReportData } from "../data/reportRepository.js";
 
 const STATUS_ORDER = ["Red", "Amber", "Green"];
 
@@ -9,9 +10,71 @@ const sortByStatus = (clients) => {
   return [...clients].sort((a, b) => priority[a.currentStatus] - priority[b.currentStatus]);
 };
 
+const normalizeName = (value) => value?.trim().toLowerCase() ?? "";
+
+const parseCsvDate = (value) => {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.replace(" ", "T");
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const buildTicketSummary = (records, client) => {
+  const aliases = client.aliases ?? [];
+  const candidateNames = [client.name, ...aliases].map(normalizeName).filter(Boolean);
+  const counts = {
+    rca: 0,
+    over7: 0,
+    over30: 0,
+    over60: 0,
+    over90: 0,
+  };
+
+  records.forEach((record) => {
+    const organization = normalizeName(record.organization);
+    if (!candidateNames.includes(organization)) {
+      return;
+    }
+
+    const status = record.ticketStatus ?? "";
+    if (status.toLowerCase().includes("rca")) {
+      counts.rca += 1;
+    }
+
+    const requested = parseCsvDate(record.requested);
+    if (!requested) {
+      return;
+    }
+    const ageInDays = Math.floor((Date.now() - requested.getTime()) / 86400000);
+    if (ageInDays > 7) {
+      counts.over7 += 1;
+    }
+    if (ageInDays > 30) {
+      counts.over30 += 1;
+    }
+    if (ageInDays > 60) {
+      counts.over60 += 1;
+    }
+    if (ageInDays > 90) {
+      counts.over90 += 1;
+    }
+  });
+
+  return counts;
+};
+
 export default function DashboardPage() {
   const { clients } = useClients();
-  const sortedClients = sortByStatus(clients);
+  const incidentRecords = getReportData("incidents").records;
+  const supportRecords = getReportData("support-tickets").records;
+  const clientsWithSummaries = clients.map((client) => ({
+    ...client,
+    incidentSummary: buildTicketSummary(incidentRecords, client),
+    supportSummary: buildTicketSummary(supportRecords, client),
+  }));
+  const sortedClients = sortByStatus(clientsWithSummaries);
 
   return (
     <section className="d-grid gap-4">

@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClients } from "../state/ClientsContext.jsx";
+import { getReportData, importReportCsv } from "../data/reportRepository.js";
 
 const REGIONS = ["APAC", "Europe", "Africa", "MEA", "Americas"];
 const PRODUCTS = ["VoucherEngine", "Banking.Live"];
@@ -39,6 +40,7 @@ const toggleScheme = (selected, scheme) =>
 
 const createEmptyForm = () => ({
   name: "",
+  aliases: [],
   region: REGIONS[0],
   product: PRODUCTS[0],
   tier: TIERS[0],
@@ -49,13 +51,149 @@ const createEmptyForm = () => ({
   clientLogo: "",
 });
 
+const REPORT_IMPORTS = [
+  { type: "incidents", label: "Incidents" },
+  { type: "support-tickets", label: "Support Tickets" },
+  { type: "jiras", label: "JIRAs" },
+  { type: "product-requests", label: "Product Requests" },
+  { type: "implementation-requests", label: "Implementation Requests" },
+];
+
+const REPORT_TABLE_COLUMNS = {
+  incidents: [
+    { key: "id", label: "ID" },
+    { key: "ticketStatus", label: "Status" },
+    { key: "organization", label: "Organization" },
+    { key: "requester", label: "Requester" },
+    { key: "subject", label: "Subject" },
+    { key: "priority", label: "Priority" },
+    { key: "sla", label: "SLA" },
+    { key: "requested", label: "Requested" },
+    { key: "updated", label: "Updated" },
+    { key: "ticketForm", label: "Ticket form" },
+    { key: "orgTier", label: "Org tier" },
+  ],
+  "support-tickets": [
+    { key: "id", label: "ID" },
+    { key: "ticketStatus", label: "Status" },
+    { key: "organization", label: "Organization" },
+    { key: "subject", label: "Subject" },
+    { key: "group", label: "Group" },
+    { key: "assignee", label: "Assignee" },
+    { key: "priority", label: "Priority" },
+    { key: "sla", label: "SLA" },
+    { key: "requested", label: "Requested" },
+    { key: "associatedJira", label: "Associated Jira" },
+  ],
+};
+
+const RECORDS_PER_PAGE = 10;
+const AGE_BUCKETS = [
+  { label: "0-7 days", min: 0, max: 7 },
+  { label: "8-30 days", min: 8, max: 30 },
+  { label: "31-90 days", min: 31, max: 90 },
+  { label: "91+ days", min: 91, max: Number.POSITIVE_INFINITY },
+];
+
+const parseCsvDate = (value) => {
+  if (!value) {
+    return null;
+  }
+  const normalized = value.replace(" ", "T");
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const getAgeBucket = (days) =>
+  AGE_BUCKETS.find((bucket) => days >= bucket.min && days <= bucket.max)?.label ??
+  "Unknown";
+
+const buildSummary = (records) => {
+  const statusCounts = records.reduce((acc, record) => {
+    const status = record.ticketStatus || "Unknown";
+    acc[status] = (acc[status] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  const ageCounts = records.reduce((acc, record) => {
+    const requested = parseCsvDate(record.requested);
+    if (!requested) {
+      acc.Unknown = (acc.Unknown ?? 0) + 1;
+      return acc;
+    }
+    const ageInDays = Math.floor((Date.now() - requested.getTime()) / 86400000);
+    const bucket = getAgeBucket(ageInDays);
+    acc[bucket] = (acc[bucket] ?? 0) + 1;
+    return acc;
+  }, {});
+
+  return { statusCounts, ageCounts };
+};
+
 export default function ConfigPage() {
   const navigate = useNavigate();
   const { clients, addClient, updateClient, removeClient, replaceClients } = useClients();
   const [formState, setFormState] = useState(createEmptyForm);
+  const [aliasInput, setAliasInput] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [importError, setImportError] = useState("");
   const importInputRef = useRef(null);
+  const [reportError, setReportError] = useState("");
+  const [reportData, setReportData] = useState(() =>
+    REPORT_IMPORTS.reduce((acc, report) => {
+      acc[report.type] = getReportData(report.type);
+      return acc;
+    }, {})
+  );
+  const [activeReportType, setActiveReportType] = useState(null);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [page, setPage] = useState(1);
+
+  const reportSummary = useMemo(
+    () =>
+      REPORT_IMPORTS.map((report) => ({
+        ...report,
+        records: reportData[report.type]?.records ?? [],
+        lastImportedAt: reportData[report.type]?.lastImportedAt ?? null,
+      })),
+    [reportData]
+  );
+
+  const activeReport = reportSummary.find((report) => report.type === activeReportType) ?? null;
+  const activeColumns = activeReport ? REPORT_TABLE_COLUMNS[activeReport.type] ?? [] : [];
+  const filteredRecords = useMemo(() => {
+    if (!activeReport) {
+      return [];
+    }
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+    if (!normalizedSearch) {
+      return activeReport.records;
+    }
+    return activeReport.records.filter((record) =>
+      Object.entries(record)
+        .filter(([key]) => key !== "history")
+        .some(([, value]) =>
+          String(value ?? "")
+            .toLowerCase()
+            .includes(normalizedSearch)
+        )
+    );
+  }, [activeReport, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredRecords.length / RECORDS_PER_PAGE));
+  const pagedRecords = filteredRecords.slice(
+    (page - 1) * RECORDS_PER_PAGE,
+    page * RECORDS_PER_PAGE
+  );
+
+  const summaryData = useMemo(
+    () => (activeReport ? buildSummary(activeReport.records) : null),
+    [activeReport]
+  );
+
+  const summaryLabel = activeReport?.label ?? "Tickets";
+  const searchPlaceholder =
+    activeReport?.type === "support-tickets" ? "Search support tickets..." : "Search incidents...";
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -66,6 +204,7 @@ export default function ConfigPage() {
     const today = new Date().toISOString().slice(0, 10);
     const payload = {
       name: trimmedName,
+      aliases: formState.aliases,
       region: formState.region,
       product: formState.product,
       tier: formState.tier,
@@ -80,6 +219,7 @@ export default function ConfigPage() {
       updateClient(editingId, payload);
       setEditingId(null);
       setFormState(createEmptyForm());
+      setAliasInput("");
       return;
     }
 
@@ -95,6 +235,7 @@ export default function ConfigPage() {
         },
       ],
     });
+    setAliasInput("");
     navigate("/");
   };
 
@@ -117,6 +258,7 @@ export default function ConfigPage() {
     setEditingId(client.id);
     setFormState({
       name: client.name ?? "",
+      aliases: client.aliases ?? [],
       region: client.region ?? REGIONS[0],
       product: client.product ?? PRODUCTS[0],
       tier: client.tier ?? TIERS[0],
@@ -126,11 +268,13 @@ export default function ConfigPage() {
       customSchemeLogo: client.customSchemeLogo ?? "",
       clientLogo: client.clientLogo ?? "",
     });
+    setAliasInput("");
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setFormState(createEmptyForm());
+    setAliasInput("");
   };
 
   const handleDeleteClient = (clientId) => {
@@ -138,6 +282,32 @@ export default function ConfigPage() {
     if (editingId === clientId) {
       handleCancelEdit();
     }
+  };
+
+  const handleAddAlias = () => {
+    const trimmedAlias = aliasInput.trim();
+    if (!trimmedAlias) {
+      return;
+    }
+    const exists = formState.aliases.some(
+      (alias) => alias.toLowerCase() === trimmedAlias.toLowerCase()
+    );
+    if (exists) {
+      setAliasInput("");
+      return;
+    }
+    setFormState((prev) => ({
+      ...prev,
+      aliases: [...prev.aliases, trimmedAlias],
+    }));
+    setAliasInput("");
+  };
+
+  const handleRemoveAlias = (aliasToRemove) => {
+    setFormState((prev) => ({
+      ...prev,
+      aliases: prev.aliases.filter((alias) => alias !== aliasToRemove),
+    }));
   };
 
   const handleExport = () => {
@@ -176,13 +346,111 @@ export default function ConfigPage() {
     reader.readAsText(file);
   };
 
+  const handleReportImport = (type, file) => {
+    if (!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        return;
+      }
+      try {
+        const payload = importReportCsv(type, reader.result);
+        setReportData((prev) => ({ ...prev, [type]: payload }));
+        setReportError("");
+      } catch (error) {
+        setReportError(error.message || "Unable to import CSV report.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
+  const handleOpenReport = (type) => {
+    setActiveReportType(type);
+    setSearchTerm("");
+    setPage(1);
+  };
+
+  const handleCloseReport = () => {
+    setActiveReportType(null);
+  };
+
   return (
     <section className="d-grid gap-4">
       <div>
-        <h2 className="mb-1">{editingId ? "Edit client" : "Add a new client"}</h2>
+        <h2 className="mb-1">Admin center</h2>
         <p className="text-body-secondary mb-0">
-          Configure region, product, tier, and an initial weekly status note.
+          Manage client profiles and import operational reports.
         </p>
+      </div>
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+              <h3 className="h5">Import data</h3>
+              <p className="text-body-secondary mb-0">
+                Upload CSV reports by category to keep incident and support data in sync.
+              </p>
+            </div>
+            <div className="d-flex flex-wrap gap-2">
+              {REPORT_IMPORTS.map((report) => (
+                <label
+                  key={report.type}
+                  className="btn btn-outline-primary btn-sm mb-0"
+                >
+                  {report.label}
+                  <input
+                    className="d-none"
+                    type="file"
+                    accept=".csv"
+                    onChange={(event) =>
+                      handleReportImport(report.type, event.target.files?.[0])
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+          {reportError ? (
+            <p className="text-danger small mt-2 mb-0">{reportError}</p>
+          ) : null}
+          <div className="table-responsive mt-3">
+            <table className="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Report type</th>
+                  <th scope="col">Records</th>
+                  <th scope="col">Last imported</th>
+                  <th scope="col">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reportSummary.map((report) => (
+                  <tr key={report.type}>
+                    <td>{report.label}</td>
+                    <td>{report.records.length}</td>
+                    <td>{report.lastImportedAt || "Not imported yet"}</td>
+                    <td>
+                      {["incidents", "support-tickets"].includes(report.type) ? (
+                        <button
+                          className="btn btn-link btn-sm px-0"
+                          type="button"
+                          onClick={() => handleOpenReport(report.type)}
+                          disabled={report.records.length === 0}
+                        >
+                          View data
+                        </button>
+                      ) : (
+                        <span className="text-body-secondary small">Coming soon</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       <form className="card shadow-sm" onSubmit={handleSubmit}>
         <div className="card-body">
@@ -201,6 +469,51 @@ export default function ConfigPage() {
                 }
                 placeholder="Client name"
               />
+            </div>
+            <div className="col-12">
+              <label className="form-label" htmlFor="client-aliases">
+                Client aliases
+              </label>
+              <div className="input-group">
+                <input
+                  id="client-aliases"
+                  className="form-control"
+                  type="text"
+                  value={aliasInput}
+                  onChange={(event) => setAliasInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      handleAddAlias();
+                    }
+                  }}
+                  placeholder="Add an alias and press Enter"
+                />
+                <button
+                  className="btn btn-outline-secondary"
+                  type="button"
+                  onClick={handleAddAlias}
+                >
+                  Add alias
+                </button>
+              </div>
+              {formState.aliases.length > 0 ? (
+                <div className="d-flex flex-wrap gap-2 mt-2">
+                  {formState.aliases.map((alias) => (
+                    <span key={alias} className="badge text-bg-light border">
+                      {alias}
+                      <button
+                        className="btn btn-sm btn-link text-danger ms-1 p-0"
+                        type="button"
+                        onClick={() => handleRemoveAlias(alias)}
+                        aria-label={`Remove alias ${alias}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className="col-md-6">
               <label className="form-label" htmlFor="client-region">
@@ -383,7 +696,7 @@ export default function ConfigPage() {
         <div className="card-body">
           <div className="d-flex flex-wrap justify-content-between align-items-start gap-2">
             <div>
-              <h3 className="h5">Manage clients</h3>
+              <h3 className="h5">Client management</h3>
               <p className="text-body-secondary mb-0">
                 Edit client details or remove inactive accounts.
               </p>
@@ -455,6 +768,120 @@ export default function ConfigPage() {
           </div>
         </div>
       </div>
+      {activeReport ? (
+        <div className="modal d-block" role="dialog" aria-modal="true">
+          <div className="modal-dialog modal-xl modal-dialog-scrollable">
+            <div className="modal-content">
+              <div className="modal-header">
+                <div>
+                  <h5 className="modal-title mb-1">{activeReport.label} data</h5>
+                  <p className="text-body-secondary small mb-0">
+                    Showing {filteredRecords.length} records
+                  </p>
+                </div>
+                <button className="btn-close" type="button" onClick={handleCloseReport} />
+              </div>
+              <div className="modal-body">
+                {summaryData ? (
+                  <div className="row g-3 mb-4">
+                    <div className="col-md-6">
+                      <div className="border rounded-3 p-3 h-100">
+                        <h6 className="mb-2">{summaryLabel} by status</h6>
+                        <ul className="list-unstyled mb-0">
+                          {Object.entries(summaryData.statusCounts).map(([status, count]) => (
+                            <li key={status} className="d-flex justify-content-between">
+                              <span>{status}</span>
+                              <span className="fw-semibold">{count}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                    <div className="col-md-6">
+                      <div className="border rounded-3 p-3 h-100">
+                        <h6 className="mb-2">{summaryLabel} by age</h6>
+                        <ul className="list-unstyled mb-0">
+                          {Object.entries(summaryData.ageCounts).map(([bucket, count]) => (
+                            <li key={bucket} className="d-flex justify-content-between">
+                              <span>{bucket}</span>
+                              <span className="fw-semibold">{count}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+                  <input
+                    className="form-control w-auto flex-grow-1"
+                    type="search"
+                    placeholder={searchPlaceholder}
+                    value={searchTerm}
+                    onChange={(event) => {
+                      setSearchTerm(event.target.value);
+                      setPage(1);
+                    }}
+                  />
+                  <div className="text-body-secondary small">
+                    Page {page} of {totalPages}
+                  </div>
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-sm align-middle">
+                    <thead>
+                      <tr>
+                        {activeColumns.map((column) => (
+                          <th key={column.key} scope="col">
+                            {column.label}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pagedRecords.map((record) => (
+                        <tr key={record.id}>
+                          {activeColumns.map((column) => (
+                            <td key={column.key}>{record[column.key]}</td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                {filteredRecords.length === 0 ? (
+                  <p className="text-body-secondary small mb-0">No records found.</p>
+                ) : null}
+              </div>
+              <div className="modal-footer">
+                <div className="d-flex flex-wrap gap-2 w-100 justify-content-between align-items-center">
+                  <div className="btn-group" role="group">
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      type="button"
+                      onClick={() => setPage((prev) => Math.max(1, prev - 1))}
+                      disabled={page === 1}
+                    >
+                      Previous
+                    </button>
+                    <button
+                      className="btn btn-outline-secondary btn-sm"
+                      type="button"
+                      onClick={() => setPage((prev) => Math.min(totalPages, prev + 1))}
+                      disabled={page === totalPages}
+                    >
+                      Next
+                    </button>
+                  </div>
+                  <button className="btn btn-primary btn-sm" type="button" onClick={handleCloseReport}>
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }
