@@ -74,7 +74,10 @@ export default function ClientDetailPage() {
         <div className="col">
           <div className="card h-100 shadow-sm">
             <div className="card-body">
-              <h4 className="h6">Support tickets</h4>
+              <h4 className="h6 d-flex align-items-center gap-2">
+                <i className="bi bi-ticket-perforated" aria-hidden="true"></i>
+                Support tickets
+              </h4>
               <p className="mb-1">
                 L1: {client.metrics.tickets.L1} · L2: {client.metrics.tickets.L2} · L3:
                 {client.metrics.tickets.L3}
@@ -89,7 +92,10 @@ export default function ClientDetailPage() {
         <div className="col">
           <div className="card h-100 shadow-sm">
             <div className="card-body">
-              <h4 className="h6">JIRA issues</h4>
+              <h4 className="h6 d-flex align-items-center gap-2">
+                <i className="bi bi-kanban" aria-hidden="true"></i>
+                JIRA issues
+              </h4>
               <p className="mb-1">Open: {client.metrics.jiras.openCount}</p>
               <p className="text-body-secondary small mb-0">
                 Critical: {client.metrics.jiras.critical}
@@ -100,7 +106,10 @@ export default function ClientDetailPage() {
         <div className="col">
           <div className="card h-100 shadow-sm">
             <div className="card-body">
-              <h4 className="h6">Product requests</h4>
+              <h4 className="h6 d-flex align-items-center gap-2">
+                <i className="bi bi-inbox" aria-hidden="true"></i>
+                Product requests
+              </h4>
               <p className="mb-0">Open requests: {client.metrics.requests}</p>
             </div>
           </div>
@@ -108,7 +117,10 @@ export default function ClientDetailPage() {
         <div className="col">
           <div className="card h-100 shadow-sm">
             <div className="card-body">
-              <h4 className="h6">Incidents</h4>
+              <h4 className="h6 d-flex align-items-center gap-2">
+                <i className="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                Incidents
+              </h4>
               <p className="mb-0">Recent incidents: {client.metrics.incidents}</p>
             </div>
           </div>

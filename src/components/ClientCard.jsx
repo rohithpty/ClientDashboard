@@ -77,7 +77,10 @@ export default function ClientCard({ client }) {
         <div className="row text-center g-2">
           <div className="col-6 col-lg-3">
             <div className="border border-opacity-25 rounded-3 py-2 h-100">
-              <div className="small">Tickets</div>
+              <div className="small d-flex align-items-center justify-content-center gap-1">
+                <i className="bi bi-ticket-perforated" aria-hidden="true"></i>
+                Tickets
+              </div>
               <div className="fw-semibold" title={ticketSummary}>
                 {totalTickets}
               </div>
@@ -85,19 +88,28 @@ export default function ClientCard({ client }) {
           </div>
           <div className="col-6 col-lg-3">
             <div className="border border-opacity-25 rounded-3 py-2 h-100">
-              <div className="small">JIRA</div>
+              <div className="small d-flex align-items-center justify-content-center gap-1">
+                <i className="bi bi-kanban" aria-hidden="true"></i>
+                JIRA
+              </div>
               <div className="fw-semibold">{client.metrics.jiras.openCount}</div>
             </div>
           </div>
           <div className="col-6 col-lg-3">
             <div className="border border-opacity-25 rounded-3 py-2 h-100">
-              <div className="small">Requests</div>
+              <div className="small d-flex align-items-center justify-content-center gap-1">
+                <i className="bi bi-inbox" aria-hidden="true"></i>
+                Requests
+              </div>
               <div className="fw-semibold">{client.metrics.requests}</div>
             </div>
           </div>
           <div className="col-6 col-lg-3">
             <div className="border border-opacity-25 rounded-3 py-2 h-100">
-              <div className="small">Incidents</div>
+              <div className="small d-flex align-items-center justify-content-center gap-1">
+                <i className="bi bi-exclamation-triangle" aria-hidden="true"></i>
+                Incidents
+              </div>
               <div className="fw-semibold">{client.metrics.incidents}</div>
             </div>
           </div>
