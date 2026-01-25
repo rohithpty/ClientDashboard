@@ -1,4 +1,4 @@
-const EXPECTED_HEADERS = [
+const INCIDENT_HEADERS = [
   "ID",
   "Ticket status",
   "Organization",
@@ -12,7 +12,7 @@ const EXPECTED_HEADERS = [
   "Org Tier",
 ];
 
-const HEADER_KEY_MAP = {
+const INCIDENT_HEADER_KEY_MAP = {
   ID: "id",
   "Ticket status": "ticketStatus",
   Organization: "organization",
@@ -24,6 +24,32 @@ const HEADER_KEY_MAP = {
   Updated: "updated",
   "Ticket form": "ticketForm",
   "Org Tier": "orgTier",
+};
+
+const SUPPORT_TICKET_HEADERS = [
+  "ID",
+  "Ticket status",
+  "Organization",
+  "Subject",
+  "Group",
+  "Assignee",
+  "Priority",
+  "SLA",
+  "Requested",
+  "Associated Jira",
+];
+
+const SUPPORT_TICKET_HEADER_KEY_MAP = {
+  ID: "id",
+  "Ticket status": "ticketStatus",
+  Organization: "organization",
+  Subject: "subject",
+  Group: "group",
+  Assignee: "assignee",
+  Priority: "priority",
+  SLA: "sla",
+  Requested: "requested",
+  "Associated Jira": "associatedJira",
 };
 
 const parseCsvLine = (line) => {
@@ -64,7 +90,12 @@ const normalizeRows = (csvText) =>
     .map((row) => row.trim())
     .filter(Boolean);
 
-export const parseReportCsv = (csvText) => {
+export const parseReportCsv = (csvText, schema) => {
+  if (!schema) {
+    throw new Error("CSV schema is required.");
+  }
+  const expectedHeaders = schema.headers;
+  const headerKeyMap = schema.keyMap;
   const rows = normalizeRows(csvText);
   if (rows.length === 0) {
     return [];
@@ -72,7 +103,7 @@ export const parseReportCsv = (csvText) => {
 
   const headerValues = parseCsvLine(rows[0]).map((value) => value.trim());
   const headerKey = headerValues.join("|");
-  const expectedKey = EXPECTED_HEADERS.join("|");
+  const expectedKey = expectedHeaders.join("|");
 
   if (headerKey !== expectedKey) {
     throw new Error("CSV headers do not match the expected template.");
@@ -80,8 +111,8 @@ export const parseReportCsv = (csvText) => {
 
   return rows.slice(1).map((row) => {
     const values = parseCsvLine(row);
-    return EXPECTED_HEADERS.reduce((acc, header, index) => {
-      const key = HEADER_KEY_MAP[header];
+    return expectedHeaders.reduce((acc, header, index) => {
+      const key = headerKeyMap[header];
       acc[key] = values[index] ?? "";
       return acc;
     }, {});
@@ -126,4 +157,25 @@ export const mergeReportRecords = (existingRecords, incomingRecords, importedAt)
   return Array.from(recordMap.values());
 };
 
-export const REPORT_HEADERS = EXPECTED_HEADERS;
+export const REPORT_SCHEMAS = {
+  incidents: {
+    headers: INCIDENT_HEADERS,
+    keyMap: INCIDENT_HEADER_KEY_MAP,
+  },
+  jiras: {
+    headers: INCIDENT_HEADERS,
+    keyMap: INCIDENT_HEADER_KEY_MAP,
+  },
+  "product-requests": {
+    headers: INCIDENT_HEADERS,
+    keyMap: INCIDENT_HEADER_KEY_MAP,
+  },
+  "implementation-requests": {
+    headers: INCIDENT_HEADERS,
+    keyMap: INCIDENT_HEADER_KEY_MAP,
+  },
+  "support-tickets": {
+    headers: SUPPORT_TICKET_HEADERS,
+    keyMap: SUPPORT_TICKET_HEADER_KEY_MAP,
+  },
+};

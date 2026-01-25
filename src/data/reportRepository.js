@@ -1,4 +1,4 @@
-import { mergeReportRecords, parseReportCsv } from "../utils/reportCsv.js";
+import { mergeReportRecords, parseReportCsv, REPORT_SCHEMAS } from "../utils/reportCsv.js";
 
 const STORAGE_PREFIX = "csvReports:";
 
@@ -36,7 +36,11 @@ export const saveReportData = (type, data) => {
 };
 
 export const importReportCsv = (type, csvText) => {
-  const parsedRecords = parseReportCsv(csvText);
+  const schema = REPORT_SCHEMAS[type];
+  if (!schema) {
+    throw new Error(`No CSV schema configured for ${type}.`);
+  }
+  const parsedRecords = parseReportCsv(csvText, schema);
   const existing = getReportData(type);
   const mergedRecords = mergeReportRecords(existing.records, parsedRecords);
   const payload = {

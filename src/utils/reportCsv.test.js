@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseReportCsv } from "./reportCsv.js";
+import { parseReportCsv, REPORT_SCHEMAS } from "./reportCsv.js";
 
 const sampleCsv = `"ID","Ticket status","Organization","Requester","Subject","Priority","SLA","Requested","Updated","Ticket form","Org Tier"
 "1085566","Resolved - Awaiting Feedback","ICC Loyalty","Abhijit Awale","ALDAR - txns decline","High","","2026-01-07 20:03","2026-01-24 17:02","Service Incident","3. Preferred"
@@ -13,7 +13,7 @@ const sampleCsv = `"ID","Ticket status","Organization","Requester","Subject","Pr
 
 describe("parseReportCsv", () => {
   it("parses the sample CSV into structured records", () => {
-    const records = parseReportCsv(sampleCsv);
+    const records = parseReportCsv(sampleCsv, REPORT_SCHEMAS.incidents);
 
     expect(records).toEqual([
       {
@@ -120,6 +120,434 @@ describe("parseReportCsv", () => {
         updated: "2026-01-22 12:02",
         ticketForm: "Service Incident",
         orgTier: "1. Elite",
+      },
+    ]);
+  });
+
+  it("parses the support tickets CSV into structured records", () => {
+    const supportCsv = `"ID","Ticket status","Organization","Subject","Group","Assignee","Priority","SLA","Requested","Associated Jira"
+"1091068","Escalated Internally","D360","Problem with processing card settlement - D360-1612","[L2] Advanced Support","Kevin Valle","High","2026-01-26 16:25","2026-01-19 16:25","'-"
+"1091067","Escalated Internally","Mettle","Scheduled Downtime - Sunday 8th of Feb (3:00-7:00am UTC)","[L1] CS - Banking.Live","William Perez","Low","2026-01-26 16:23","2026-01-19 16:23","'-"
+"1090200","Escalated Internally","C24","Assume SCA is done logic","[L2] Advanced Support","Juliano Ciena","Low","2026-01-24 03:07","2026-01-16 17:19","Yes"
+"1089897","Escalated Internally","Wio","Intermittent IPS Timeout Observed","[L1] CS - Banking.Live","Sonia Seh","Low","2026-01-23 06:08","2026-01-16 06:08","'-"
+"1088746","Escalated Internally","D360","UAT- Request Timeout Issue in Card Creation","[L2] Advanced Support","Ramon Gouveia","Urgent","2026-01-25 19:53","2026-01-14 10:10","Yes"
+"1088217","Escalated Internally","D360","Perso IPK expiry of 2030 causing new card creation incident. New cards are not printed.","[L2] Advanced Support","Muneer Gundlur","Urgent","2026-01-20 18:07","2026-01-13 14:28","Yes"
+"1087947","On-hold","Wio","Neo Fintech : Declines - Error Occurred while Rules engine processing","[L1] CS - Banking.Live","Pradeep Boopathe Rajeswari","Low","2026-01-20 08:24","2026-01-13 08:12","'-"
+"1087738","Escalated Internally","MOX","Daily Chargeback Report Issue","[L1] CS - Banking.Live","William Perez","Low","2026-01-19 19:31","2026-01-12 19:31","'-"
+"1087184","Escalated Internally","MOX","Declines due to Rules Engine Processing Error","[L1] CS - Banking.Live","William Perez","Normal","2026-01-14 10:38","2026-01-12 00:53","'-"
+"1086076","On-hold","Islandsbanki","Islandsbanki users in Zendesk","[L1] CS - Banking.Live","William Perez","Low","2026-01-15 17:01","2026-01-08 17:01","'-"
+"1085210","On-hold","MOX","Clarification on pin block format","[L2] Advanced Support","Kamal Thapa","High","2026-01-21 02:47","2026-01-07 10:14","Yes"
+"1084750","Escalated Internally","Wio","VISA MDK required","[L2] Advanced Support","Rajesh Subramanian","Low","2026-01-15 09:43","2026-01-06 13:28","'-"
+"1084277","Escalated Third-Party","Wio","Advisement Notification January 6th 2026","[L1] CS - Banking.Live","Rahadian Pratama","Low","2026-01-13 02:55","2026-01-06 02:40","'-"
+"1084022","Escalated Third-Party","TymeBank SA","Waiting settlement file in UAT for 09 Dec 2025","[L2] Advanced Support","Praveen Baskaran","Normal","2026-01-12 14:36","2026-01-05 14:36","Yes"
+"1081754","On-hold","Old Mutual Bank / Olympus","FW: Threat scan","[L2] Advanced Support","Abdul Sahaptheen","Low","2025-12-30 10:35","2025-12-29 14:35","'-"
+"1081515","Escalated Internally","MOX","Timeout at everyday's HKT midnight","[L1] CS - Banking.Live","Rahadian Pratama","Normal","2026-01-06 14:35","2025-12-29 05:20","'-"
+"1080264","Open","Wio","Duplicate Auth for the same TID","[L2] Advanced Support","Muneer Gundlur","Normal","2025-12-30 17:16","2025-12-23 17:16","Yes"
+"1080251","Escalated Internally","Mettle","UAT: testing failing when retrieve PAN/CVV/PIN for debit card","[L2] Advanced Support","Praveen Baskaran","Normal","2026-01-09 12:13","2025-12-23 16:41","Yes"
+"1080098","Escalated Third-Party","Nomo Bank","Unknown refund received","[L2] Advanced Support","Praveen Baskaran","Low","2025-12-30 16:19","2025-12-23 11:55","'-"
+"1079319","Escalated Third-Party","MOX","HKT reports for Primary and Seconding data center flapping on 22 Dec 2025","[L1] CS - Banking.Live","Rahadian Pratama","Normal","2025-12-24 06:48","2025-12-22 06:48","'-"
+"1079074","Escalated Internally","Wio","A socket disconnection caused some transactions to decline","[L2] Advanced Support","Kevin Valle","Normal","2025-12-23 00:23","2025-12-21 00:17","Yes"
+"1076042","On-hold","D360","Partial Outage of Transaction Processing","[L1] CS - Banking.Live","William Perez","Normal","2025-12-17 07:04","2025-12-14 18:28","'-"
+"1073330","On-hold","C24","Paycontrol Bug: Tests section","[L2] Advanced Support","Suganya Eswaran","Low","2025-12-16 12:15","2025-12-09 11:59","Yes"
+"1071317","Escalated Internally","D360","VCAS setup for D360 - RiskRequest","[L2] Advanced Support","Kevin Valle","Low","2025-12-11 13:16","2025-12-04 13:16","Yes"
+"1070444","Open","Wio","Rule Engine delay","[L1] CS - Banking.Live","Rasheed Khan","Low","2025-12-10 11:48","2025-12-03 11:33","'-"
+"1069754","On-hold","MOX","Duplicated transaction ID","[L2] Advanced Support","Kamal Thapa","Low","2026-01-03 01:32","2025-12-02 12:59","'-"
+"1062938","On-hold","MOX","Rule Engine","[L1] CS - Banking.Live","Rasheed Khan","Low","2025-11-28 09:29","2025-11-18 09:25","Yes"
+"1062185","On-hold","MOX","Timeouts","[L1] CS - Banking.Live","Rasheed Khan","Low","2025-11-24 05:53","2025-11-16 14:43","Yes"
+"1052762","On-hold","Old Mutual Bank / Olympus","Mastercard - Identified reports required for Finance Settlement processes_file format","[L2] Advanced Support","Abdul Sahaptheen","High","2025-11-05 17:11","2025-10-29 17:11","Yes"
+"1051304","On-hold","C24","Offline PIN not updated after failed tx","[L2] Advanced Support","Ramon Gouveia","Low","2025-11-03 16:55","2025-10-27 16:55","Yes"
+"1048794","Escalated Internally","MOX","Transactions timeout - MOX","[L2] Advanced Support","Suganya Eswaran","Low","2025-10-30 09:08","2025-10-23 09:08","Yes"
+"1048061","Escalated Internally","C24","Card files missing","[L2] Advanced Support","Suganya Eswaran","High","2025-10-23 15:47","2025-10-22 10:46","Yes"`;
+
+    const records = parseReportCsv(supportCsv, REPORT_SCHEMAS["support-tickets"]);
+
+    expect(records).toEqual([
+      {
+        id: "1091068",
+        ticketStatus: "Escalated Internally",
+        organization: "D360",
+        subject: "Problem with processing card settlement - D360-1612",
+        group: "[L2] Advanced Support",
+        assignee: "Kevin Valle",
+        priority: "High",
+        sla: "2026-01-26 16:25",
+        requested: "2026-01-19 16:25",
+        associatedJira: "'-",
+      },
+      {
+        id: "1091067",
+        ticketStatus: "Escalated Internally",
+        organization: "Mettle",
+        subject: "Scheduled Downtime - Sunday 8th of Feb (3:00-7:00am UTC)",
+        group: "[L1] CS - Banking.Live",
+        assignee: "William Perez",
+        priority: "Low",
+        sla: "2026-01-26 16:23",
+        requested: "2026-01-19 16:23",
+        associatedJira: "'-",
+      },
+      {
+        id: "1090200",
+        ticketStatus: "Escalated Internally",
+        organization: "C24",
+        subject: "Assume SCA is done logic",
+        group: "[L2] Advanced Support",
+        assignee: "Juliano Ciena",
+        priority: "Low",
+        sla: "2026-01-24 03:07",
+        requested: "2026-01-16 17:19",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1089897",
+        ticketStatus: "Escalated Internally",
+        organization: "Wio",
+        subject: "Intermittent IPS Timeout Observed",
+        group: "[L1] CS - Banking.Live",
+        assignee: "Sonia Seh",
+        priority: "Low",
+        sla: "2026-01-23 06:08",
+        requested: "2026-01-16 06:08",
+        associatedJira: "'-",
+      },
+      {
+        id: "1088746",
+        ticketStatus: "Escalated Internally",
+        organization: "D360",
+        subject: "UAT- Request Timeout Issue in Card Creation",
+        group: "[L2] Advanced Support",
+        assignee: "Ramon Gouveia",
+        priority: "Urgent",
+        sla: "2026-01-25 19:53",
+        requested: "2026-01-14 10:10",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1088217",
+        ticketStatus: "Escalated Internally",
+        organization: "D360",
+        subject:
+          "Perso IPK expiry of 2030 causing new card creation incident. New cards are not printed.",
+        group: "[L2] Advanced Support",
+        assignee: "Muneer Gundlur",
+        priority: "Urgent",
+        sla: "2026-01-20 18:07",
+        requested: "2026-01-13 14:28",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1087947",
+        ticketStatus: "On-hold",
+        organization: "Wio",
+        subject: "Neo Fintech : Declines - Error Occurred while Rules engine processing",
+        group: "[L1] CS - Banking.Live",
+        assignee: "Pradeep Boopathe Rajeswari",
+        priority: "Low",
+        sla: "2026-01-20 08:24",
+        requested: "2026-01-13 08:12",
+        associatedJira: "'-",
+      },
+      {
+        id: "1087738",
+        ticketStatus: "Escalated Internally",
+        organization: "MOX",
+        subject: "Daily Chargeback Report Issue",
+        group: "[L1] CS - Banking.Live",
+        assignee: "William Perez",
+        priority: "Low",
+        sla: "2026-01-19 19:31",
+        requested: "2026-01-12 19:31",
+        associatedJira: "'-",
+      },
+      {
+        id: "1087184",
+        ticketStatus: "Escalated Internally",
+        organization: "MOX",
+        subject: "Declines due to Rules Engine Processing Error",
+        group: "[L1] CS - Banking.Live",
+        assignee: "William Perez",
+        priority: "Normal",
+        sla: "2026-01-14 10:38",
+        requested: "2026-01-12 00:53",
+        associatedJira: "'-",
+      },
+      {
+        id: "1086076",
+        ticketStatus: "On-hold",
+        organization: "Islandsbanki",
+        subject: "Islandsbanki users in Zendesk",
+        group: "[L1] CS - Banking.Live",
+        assignee: "William Perez",
+        priority: "Low",
+        sla: "2026-01-15 17:01",
+        requested: "2026-01-08 17:01",
+        associatedJira: "'-",
+      },
+      {
+        id: "1085210",
+        ticketStatus: "On-hold",
+        organization: "MOX",
+        subject: "Clarification on pin block format",
+        group: "[L2] Advanced Support",
+        assignee: "Kamal Thapa",
+        priority: "High",
+        sla: "2026-01-21 02:47",
+        requested: "2026-01-07 10:14",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1084750",
+        ticketStatus: "Escalated Internally",
+        organization: "Wio",
+        subject: "VISA MDK required",
+        group: "[L2] Advanced Support",
+        assignee: "Rajesh Subramanian",
+        priority: "Low",
+        sla: "2026-01-15 09:43",
+        requested: "2026-01-06 13:28",
+        associatedJira: "'-",
+      },
+      {
+        id: "1084277",
+        ticketStatus: "Escalated Third-Party",
+        organization: "Wio",
+        subject: "Advisement Notification January 6th 2026",
+        group: "[L1] CS - Banking.Live",
+        assignee: "Rahadian Pratama",
+        priority: "Low",
+        sla: "2026-01-13 02:55",
+        requested: "2026-01-06 02:40",
+        associatedJira: "'-",
+      },
+      {
+        id: "1084022",
+        ticketStatus: "Escalated Third-Party",
+        organization: "TymeBank SA",
+        subject: "Waiting settlement file in UAT for 09 Dec 2025",
+        group: "[L2] Advanced Support",
+        assignee: "Praveen Baskaran",
+        priority: "Normal",
+        sla: "2026-01-12 14:36",
+        requested: "2026-01-05 14:36",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1081754",
+        ticketStatus: "On-hold",
+        organization: "Old Mutual Bank / Olympus",
+        subject: "FW: Threat scan",
+        group: "[L2] Advanced Support",
+        assignee: "Abdul Sahaptheen",
+        priority: "Low",
+        sla: "2025-12-30 10:35",
+        requested: "2025-12-29 14:35",
+        associatedJira: "'-",
+      },
+      {
+        id: "1081515",
+        ticketStatus: "Escalated Internally",
+        organization: "MOX",
+        subject: "Timeout at everyday's HKT midnight",
+        group: "[L1] CS - Banking.Live",
+        assignee: "Rahadian Pratama",
+        priority: "Normal",
+        sla: "2026-01-06 14:35",
+        requested: "2025-12-29 05:20",
+        associatedJira: "'-",
+      },
+      {
+        id: "1080264",
+        ticketStatus: "Open",
+        organization: "Wio",
+        subject: "Duplicate Auth for the same TID",
+        group: "[L2] Advanced Support",
+        assignee: "Muneer Gundlur",
+        priority: "Normal",
+        sla: "2025-12-30 17:16",
+        requested: "2025-12-23 17:16",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1080251",
+        ticketStatus: "Escalated Internally",
+        organization: "Mettle",
+        subject: "UAT: testing failing when retrieve PAN/CVV/PIN for debit card",
+        group: "[L2] Advanced Support",
+        assignee: "Praveen Baskaran",
+        priority: "Normal",
+        sla: "2026-01-09 12:13",
+        requested: "2025-12-23 16:41",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1080098",
+        ticketStatus: "Escalated Third-Party",
+        organization: "Nomo Bank",
+        subject: "Unknown refund received",
+        group: "[L2] Advanced Support",
+        assignee: "Praveen Baskaran",
+        priority: "Low",
+        sla: "2025-12-30 16:19",
+        requested: "2025-12-23 11:55",
+        associatedJira: "'-",
+      },
+      {
+        id: "1079319",
+        ticketStatus: "Escalated Third-Party",
+        organization: "MOX",
+        subject:
+          "HKT reports for Primary and Seconding data center flapping on 22 Dec 2025",
+        group: "[L1] CS - Banking.Live",
+        assignee: "Rahadian Pratama",
+        priority: "Normal",
+        sla: "2025-12-24 06:48",
+        requested: "2025-12-22 06:48",
+        associatedJira: "'-",
+      },
+      {
+        id: "1079074",
+        ticketStatus: "Escalated Internally",
+        organization: "Wio",
+        subject: "A socket disconnection caused some transactions to decline",
+        group: "[L2] Advanced Support",
+        assignee: "Kevin Valle",
+        priority: "Normal",
+        sla: "2025-12-23 00:23",
+        requested: "2025-12-21 00:17",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1076042",
+        ticketStatus: "On-hold",
+        organization: "D360",
+        subject: "Partial Outage of Transaction Processing",
+        group: "[L1] CS - Banking.Live",
+        assignee: "William Perez",
+        priority: "Normal",
+        sla: "2025-12-17 07:04",
+        requested: "2025-12-14 18:28",
+        associatedJira: "'-",
+      },
+      {
+        id: "1073330",
+        ticketStatus: "On-hold",
+        organization: "C24",
+        subject: "Paycontrol Bug: Tests section",
+        group: "[L2] Advanced Support",
+        assignee: "Suganya Eswaran",
+        priority: "Low",
+        sla: "2025-12-16 12:15",
+        requested: "2025-12-09 11:59",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1071317",
+        ticketStatus: "Escalated Internally",
+        organization: "D360",
+        subject: "VCAS setup for D360 - RiskRequest",
+        group: "[L2] Advanced Support",
+        assignee: "Kevin Valle",
+        priority: "Low",
+        sla: "2025-12-11 13:16",
+        requested: "2025-12-04 13:16",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1070444",
+        ticketStatus: "Open",
+        organization: "Wio",
+        subject: "Rule Engine delay",
+        group: "[L1] CS - Banking.Live",
+        assignee: "Rasheed Khan",
+        priority: "Low",
+        sla: "2025-12-10 11:48",
+        requested: "2025-12-03 11:33",
+        associatedJira: "'-",
+      },
+      {
+        id: "1069754",
+        ticketStatus: "On-hold",
+        organization: "MOX",
+        subject: "Duplicated transaction ID",
+        group: "[L2] Advanced Support",
+        assignee: "Kamal Thapa",
+        priority: "Low",
+        sla: "2026-01-03 01:32",
+        requested: "2025-12-02 12:59",
+        associatedJira: "'-",
+      },
+      {
+        id: "1062938",
+        ticketStatus: "On-hold",
+        organization: "MOX",
+        subject: "Rule Engine",
+        group: "[L1] CS - Banking.Live",
+        assignee: "Rasheed Khan",
+        priority: "Low",
+        sla: "2025-11-28 09:29",
+        requested: "2025-11-18 09:25",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1062185",
+        ticketStatus: "On-hold",
+        organization: "MOX",
+        subject: "Timeouts",
+        group: "[L1] CS - Banking.Live",
+        assignee: "Rasheed Khan",
+        priority: "Low",
+        sla: "2025-11-24 05:53",
+        requested: "2025-11-16 14:43",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1052762",
+        ticketStatus: "On-hold",
+        organization: "Old Mutual Bank / Olympus",
+        subject:
+          "Mastercard - Identified reports required for Finance Settlement processes_file format",
+        group: "[L2] Advanced Support",
+        assignee: "Abdul Sahaptheen",
+        priority: "High",
+        sla: "2025-11-05 17:11",
+        requested: "2025-10-29 17:11",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1051304",
+        ticketStatus: "On-hold",
+        organization: "C24",
+        subject: "Offline PIN not updated after failed tx",
+        group: "[L2] Advanced Support",
+        assignee: "Ramon Gouveia",
+        priority: "Low",
+        sla: "2025-11-03 16:55",
+        requested: "2025-10-27 16:55",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1048794",
+        ticketStatus: "Escalated Internally",
+        organization: "MOX",
+        subject: "Transactions timeout - MOX",
+        group: "[L2] Advanced Support",
+        assignee: "Suganya Eswaran",
+        priority: "Low",
+        sla: "2025-10-30 09:08",
+        requested: "2025-10-23 09:08",
+        associatedJira: "Yes",
+      },
+      {
+        id: "1048061",
+        ticketStatus: "Escalated Internally",
+        organization: "C24",
+        subject: "Card files missing",
+        group: "[L2] Advanced Support",
+        assignee: "Suganya Eswaran",
+        priority: "High",
+        sla: "2025-10-23 15:47",
+        requested: "2025-10-22 10:46",
+        associatedJira: "Yes",
       },
     ]);
   });

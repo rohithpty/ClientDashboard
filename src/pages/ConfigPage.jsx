@@ -58,6 +58,34 @@ const REPORT_IMPORTS = [
   { type: "implementation-requests", label: "Implementation Requests" },
 ];
 
+const REPORT_TABLE_COLUMNS = {
+  incidents: [
+    { key: "id", label: "ID" },
+    { key: "ticketStatus", label: "Status" },
+    { key: "organization", label: "Organization" },
+    { key: "requester", label: "Requester" },
+    { key: "subject", label: "Subject" },
+    { key: "priority", label: "Priority" },
+    { key: "sla", label: "SLA" },
+    { key: "requested", label: "Requested" },
+    { key: "updated", label: "Updated" },
+    { key: "ticketForm", label: "Ticket form" },
+    { key: "orgTier", label: "Org tier" },
+  ],
+  "support-tickets": [
+    { key: "id", label: "ID" },
+    { key: "ticketStatus", label: "Status" },
+    { key: "organization", label: "Organization" },
+    { key: "subject", label: "Subject" },
+    { key: "group", label: "Group" },
+    { key: "assignee", label: "Assignee" },
+    { key: "priority", label: "Priority" },
+    { key: "sla", label: "SLA" },
+    { key: "requested", label: "Requested" },
+    { key: "associatedJira", label: "Associated Jira" },
+  ],
+};
+
 const RECORDS_PER_PAGE = 10;
 const AGE_BUCKETS = [
   { label: "0-7 days", min: 0, max: 7 },
@@ -130,6 +158,7 @@ export default function ConfigPage() {
   );
 
   const activeReport = reportSummary.find((report) => report.type === activeReportType) ?? null;
+  const activeColumns = activeReport ? REPORT_TABLE_COLUMNS[activeReport.type] ?? [] : [];
   const filteredRecords = useMemo(() => {
     if (!activeReport) {
       return [];
@@ -139,11 +168,13 @@ export default function ConfigPage() {
       return activeReport.records;
     }
     return activeReport.records.filter((record) =>
-      Object.values(record).some((value) =>
-        String(value ?? "")
-          .toLowerCase()
-          .includes(normalizedSearch)
-      )
+      Object.entries(record)
+        .filter(([key]) => key !== "history")
+        .some(([, value]) =>
+          String(value ?? "")
+            .toLowerCase()
+            .includes(normalizedSearch)
+        )
     );
   }, [activeReport, searchTerm]);
 
@@ -157,6 +188,10 @@ export default function ConfigPage() {
     () => (activeReport ? buildSummary(activeReport.records) : null),
     [activeReport]
   );
+
+  const summaryLabel = activeReport?.label ?? "Tickets";
+  const searchPlaceholder =
+    activeReport?.type === "support-tickets" ? "Search support tickets..." : "Search incidents...";
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -672,7 +707,7 @@ export default function ConfigPage() {
                   <div className="row g-3 mb-4">
                     <div className="col-md-6">
                       <div className="border rounded-3 p-3 h-100">
-                        <h6 className="mb-2">{activeReport.label} by status</h6>
+                        <h6 className="mb-2">{summaryLabel} by status</h6>
                         <ul className="list-unstyled mb-0">
                           {Object.entries(summaryData.statusCounts).map(([status, count]) => (
                             <li key={status} className="d-flex justify-content-between">
@@ -685,7 +720,7 @@ export default function ConfigPage() {
                     </div>
                     <div className="col-md-6">
                       <div className="border rounded-3 p-3 h-100">
-                        <h6 className="mb-2">{activeReport.label} by age</h6>
+                        <h6 className="mb-2">{summaryLabel} by age</h6>
                         <ul className="list-unstyled mb-0">
                           {Object.entries(summaryData.ageCounts).map(([bucket, count]) => (
                             <li key={bucket} className="d-flex justify-content-between">
@@ -702,7 +737,7 @@ export default function ConfigPage() {
                   <input
                     className="form-control w-auto flex-grow-1"
                     type="search"
-                    placeholder="Search tickets..."
+                    placeholder={searchPlaceholder}
                     value={searchTerm}
                     onChange={(event) => {
                       setSearchTerm(event.target.value);
@@ -717,33 +752,19 @@ export default function ConfigPage() {
                   <table className="table table-sm align-middle">
                     <thead>
                       <tr>
-                        <th scope="col">ID</th>
-                        <th scope="col">Status</th>
-                        <th scope="col">Organization</th>
-                        <th scope="col">Requester</th>
-                        <th scope="col">Subject</th>
-                        <th scope="col">Priority</th>
-                        <th scope="col">SLA</th>
-                        <th scope="col">Requested</th>
-                        <th scope="col">Updated</th>
-                        <th scope="col">Ticket form</th>
-                        <th scope="col">Org tier</th>
+                        {activeColumns.map((column) => (
+                          <th key={column.key} scope="col">
+                            {column.label}
+                          </th>
+                        ))}
                       </tr>
                     </thead>
                     <tbody>
                       {pagedRecords.map((record) => (
                         <tr key={record.id}>
-                          <td>{record.id}</td>
-                          <td>{record.ticketStatus}</td>
-                          <td>{record.organization}</td>
-                          <td>{record.requester}</td>
-                          <td>{record.subject}</td>
-                          <td>{record.priority}</td>
-                          <td>{record.sla}</td>
-                          <td>{record.requested}</td>
-                          <td>{record.updated}</td>
-                          <td>{record.ticketForm}</td>
-                          <td>{record.orgTier}</td>
+                          {activeColumns.map((column) => (
+                            <td key={column.key}>{record[column.key]}</td>
+                          ))}
                         </tr>
                       ))}
                     </tbody>
