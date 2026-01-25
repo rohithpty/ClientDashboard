@@ -1,6 +1,7 @@
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useClients } from "../state/ClientsContext.jsx";
+import { getReportData, importReportCsv } from "../data/reportRepository.js";
 
 const REGIONS = ["APAC", "Europe", "Africa", "MEA", "Americas"];
 const PRODUCTS = ["VoucherEngine", "Banking.Live"];
@@ -49,6 +50,14 @@ const createEmptyForm = () => ({
   clientLogo: "",
 });
 
+const REPORT_IMPORTS = [
+  { type: "incidents", label: "Incidents" },
+  { type: "support-tickets", label: "Support Tickets" },
+  { type: "jiras", label: "JIRAs" },
+  { type: "product-requests", label: "Product Requests" },
+  { type: "implementation-requests", label: "Implementation Requests" },
+];
+
 export default function ConfigPage() {
   const navigate = useNavigate();
   const { clients, addClient, updateClient, removeClient, replaceClients } = useClients();
@@ -56,6 +65,23 @@ export default function ConfigPage() {
   const [editingId, setEditingId] = useState(null);
   const [importError, setImportError] = useState("");
   const importInputRef = useRef(null);
+  const [reportError, setReportError] = useState("");
+  const [reportData, setReportData] = useState(() =>
+    REPORT_IMPORTS.reduce((acc, report) => {
+      acc[report.type] = getReportData(report.type);
+      return acc;
+    }, {})
+  );
+
+  const reportSummary = useMemo(
+    () =>
+      REPORT_IMPORTS.map((report) => ({
+        ...report,
+        records: reportData[report.type]?.records ?? [],
+        lastImportedAt: reportData[report.type]?.lastImportedAt ?? null,
+      })),
+    [reportData]
+  );
 
   const handleSubmit = (event) => {
     event.preventDefault();
@@ -176,13 +202,86 @@ export default function ConfigPage() {
     reader.readAsText(file);
   };
 
+  const handleReportImport = (type, file) => {
+    if (!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result !== "string") {
+        return;
+      }
+      try {
+        const payload = importReportCsv(type, reader.result);
+        setReportData((prev) => ({ ...prev, [type]: payload }));
+        setReportError("");
+      } catch (error) {
+        setReportError(error.message || "Unable to import CSV report.");
+      }
+    };
+    reader.readAsText(file);
+  };
+
   return (
     <section className="d-grid gap-4">
       <div>
-        <h2 className="mb-1">{editingId ? "Edit client" : "Add a new client"}</h2>
+        <h2 className="mb-1">Admin center</h2>
         <p className="text-body-secondary mb-0">
-          Configure region, product, tier, and an initial weekly status note.
+          Manage client profiles and import operational reports.
         </p>
+      </div>
+      <div className="card shadow-sm">
+        <div className="card-body">
+          <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
+            <div>
+              <h3 className="h5">Import data</h3>
+              <p className="text-body-secondary mb-0">
+                Upload CSV reports by category to keep incident and support data in sync.
+              </p>
+            </div>
+            <div className="d-flex flex-wrap gap-2">
+              {REPORT_IMPORTS.map((report) => (
+                <label
+                  key={report.type}
+                  className="btn btn-outline-primary btn-sm mb-0"
+                >
+                  {report.label}
+                  <input
+                    className="d-none"
+                    type="file"
+                    accept=".csv"
+                    onChange={(event) =>
+                      handleReportImport(report.type, event.target.files?.[0])
+                    }
+                  />
+                </label>
+              ))}
+            </div>
+          </div>
+          {reportError ? (
+            <p className="text-danger small mt-2 mb-0">{reportError}</p>
+          ) : null}
+          <div className="table-responsive mt-3">
+            <table className="table table-sm align-middle mb-0">
+              <thead>
+                <tr>
+                  <th scope="col">Report type</th>
+                  <th scope="col">Records</th>
+                  <th scope="col">Last imported</th>
+                </tr>
+              </thead>
+              <tbody>
+                {reportSummary.map((report) => (
+                  <tr key={report.type}>
+                    <td>{report.label}</td>
+                    <td>{report.records.length}</td>
+                    <td>{report.lastImportedAt || "Not imported yet"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
       <form className="card shadow-sm" onSubmit={handleSubmit}>
         <div className="card-body">
@@ -383,7 +482,7 @@ export default function ConfigPage() {
         <div className="card-body">
           <div className="d-flex flex-wrap justify-content-between align-items-start gap-2">
             <div>
-              <h3 className="h5">Manage clients</h3>
+              <h3 className="h5">Client management</h3>
               <p className="text-body-secondary mb-0">
                 Edit client details or remove inactive accounts.
               </p>
