@@ -4,26 +4,28 @@ import ClientDetailPage from "./pages/ClientDetailPage.jsx";
 import ConfigPage from "./pages/ConfigPage.jsx";
 
 const getNavClass = ({ isActive }) =>
-  isActive ? "nav-link nav-link--active" : "nav-link";
+  `nav-link fw-semibold ${isActive ? "active" : ""}`.trim();
 
 export default function App() {
   return (
-    <div className="app-shell">
-      <header className="app-header">
-        <div>
-          <p className="eyebrow">Client Health</p>
-          <h1>RAG Status Dashboard</h1>
+    <div className="app-shell bg-light min-vh-100">
+      <header className="navbar navbar-expand-lg bg-white border-bottom sticky-top">
+        <div className="container-fluid px-4">
+          <div>
+            <p className="text-uppercase text-secondary small mb-1">Client Health</p>
+            <span className="navbar-brand mb-0 h1">RAG Status Dashboard</span>
+          </div>
+          <nav className="navbar-nav ms-auto flex-row gap-2">
+            <NavLink className={getNavClass} to="/">
+              Dashboard
+            </NavLink>
+            <NavLink className={getNavClass} to="/config">
+              Manage Clients
+            </NavLink>
+          </nav>
         </div>
-        <nav className="nav">
-          <NavLink className={getNavClass} to="/">
-            Dashboard
-          </NavLink>
-          <NavLink className={getNavClass} to="/config">
-            Manage Clients
-          </NavLink>
-        </nav>
       </header>
-      <main className="app-main">
+      <main className="container py-4">
         <Routes>
           <Route path="/" element={<DashboardPage />} />
           <Route path="/clients/:id" element={<ClientDetailPage />} />

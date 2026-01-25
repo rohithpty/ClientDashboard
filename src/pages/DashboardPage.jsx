@@ -14,37 +14,24 @@ export default function DashboardPage() {
   const sortedClients = sortByStatus(clients);
 
   return (
-    <section className="dashboard">
-      <div className="dashboard__header">
+    <section className="d-grid gap-4">
+      <div className="d-flex flex-wrap justify-content-between align-items-start gap-3">
         <div>
-          <h2>Client Overview</h2>
-          <p className="muted">
+          <h2 className="mb-1">Client Overview</h2>
+          <p className="text-body-secondary mb-0">
             Sorted by health status so critical accounts surface first.
           </p>
         </div>
-        <Link className="primary-button" to="/config">
+        <Link className="btn btn-primary" to="/config">
           Add client
         </Link>
       </div>
-      <div className="status-groups">
-        {STATUS_ORDER.map((status) => {
-          const group = sortedClients.filter((client) => client.currentStatus === status);
-          if (group.length === 0) {
-            return null;
-          }
-          return (
-            <div key={status} className="status-group">
-              <h3 className={`status-title status-title--${status.toLowerCase()}`}>
-                {status} status
-              </h3>
-              <div className="client-grid">
-                {group.map((client) => (
-                  <ClientCard key={client.id} client={client} />
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      <div className="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+        {sortedClients.map((client) => (
+          <div key={client.id} className="col">
+            <ClientCard client={client} />
+          </div>
+        ))}
       </div>
     </section>
   );

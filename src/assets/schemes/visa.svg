@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 210 130">
+  <rect width="210" height="130" rx="16" fill="#ffffff" stroke="#0b5cc4" stroke-width="6"/>
+  <text x="50%" y="56%" text-anchor="middle" font-family="Arial, sans-serif" font-size="48" font-weight="700" fill="#0b5cc4">VISA</text>
+  <polygon points="55,45 70,45 60,70" fill="#f6a500"/>
+</svg>

@@ -5,6 +5,8 @@ export const seedClients = [
     region: "Europe",
     product: "VoucherEngine",
     tier: "Gold",
+    schemes: ["Mastercard", "Visa"],
+    customSchemeLogo: "",
     currentStatus: "Red",
     summary: "Payment gateway latency spikes; fix rolling out.",
     metrics: {
@@ -46,6 +48,8 @@ export const seedClients = [
     region: "APAC",
     product: "Banking.Live",
     tier: "Tier 1",
+    schemes: ["MADA", "UAE", "AFS"],
+    customSchemeLogo: "",
     currentStatus: "Amber",
     summary: "Audit remediation underway; two critical bugs open.",
     metrics: {
@@ -82,6 +86,8 @@ export const seedClients = [
     region: "MEA",
     product: "VoucherEngine",
     tier: "Silver",
+    schemes: ["Jetco", "Jonet/Cortex"],
+    customSchemeLogo: "",
     currentStatus: "Green",
     summary: "All SLAs met; no priority issues.",
     metrics: {

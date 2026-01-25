@@ -1,28 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { seedClients } from "../data/seedClients.js";
+import { localClientsRepository } from "../data/clientsRepository.js";
 
 const ClientsContext = createContext(null);
-const STORAGE_KEY = "rag-clients";
-
-const loadClients = () => {
-  const stored = localStorage.getItem(STORAGE_KEY);
-  if (!stored) {
-    return seedClients;
-  }
-  try {
-    const parsed = JSON.parse(stored);
-    return Array.isArray(parsed) ? parsed : seedClients;
-  } catch (error) {
-    console.warn("Failed to load clients from storage.", error);
-    return seedClients;
-  }
-};
 
 export const ClientsProvider = ({ children }) => {
-  const [clients, setClients] = useState(loadClients);
+  const [clients, setClients] = useState(() => localClientsRepository.getClients());
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));
+    localClientsRepository.saveClients(clients);
   }, [clients]);
 
   const addClient = (newClient) => {
@@ -31,10 +16,16 @@ export const ClientsProvider = ({ children }) => {
 
   const updateClient = (id, changes) => {
     setClients((prev) =>
-      prev.map((client) =>
-        client.id === id ? { ...client, ...changes } : client,
-      ),
+      prev.map((client) => (client.id === id ? { ...client, ...changes } : client)),
     );
+  };
+
+  const removeClient = (id) => {
+    setClients((prev) => prev.filter((client) => client.id !== id));
+  };
+
+  const replaceClients = (nextClients) => {
+    setClients(nextClients);
   };
 
   const addStatusUpdate = (id, update) => {
@@ -59,16 +50,14 @@ export const ClientsProvider = ({ children }) => {
       clients,
       addClient,
       updateClient,
+      removeClient,
+      replaceClients,
       addStatusUpdate,
     }),
     [clients],
   );
 
-  return (
-    <ClientsContext.Provider value={value}>
-      {children}
-    </ClientsContext.Provider>
-  );
+  return <ClientsContext.Provider value={value}>{children}</ClientsContext.Provider>;
 };
 
 export const useClients = () => {
