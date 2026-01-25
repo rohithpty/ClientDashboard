@@ -40,6 +40,7 @@ const toggleScheme = (selected, scheme) =>
 
 const createEmptyForm = () => ({
   name: "",
+  aliases: [],
   region: REGIONS[0],
   product: PRODUCTS[0],
   tier: TIERS[0],
@@ -133,6 +134,7 @@ export default function ConfigPage() {
   const navigate = useNavigate();
   const { clients, addClient, updateClient, removeClient, replaceClients } = useClients();
   const [formState, setFormState] = useState(createEmptyForm);
+  const [aliasInput, setAliasInput] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [importError, setImportError] = useState("");
   const importInputRef = useRef(null);
@@ -202,6 +204,7 @@ export default function ConfigPage() {
     const today = new Date().toISOString().slice(0, 10);
     const payload = {
       name: trimmedName,
+      aliases: formState.aliases,
       region: formState.region,
       product: formState.product,
       tier: formState.tier,
@@ -216,6 +219,7 @@ export default function ConfigPage() {
       updateClient(editingId, payload);
       setEditingId(null);
       setFormState(createEmptyForm());
+      setAliasInput("");
       return;
     }
 
@@ -231,6 +235,7 @@ export default function ConfigPage() {
         },
       ],
     });
+    setAliasInput("");
     navigate("/");
   };
 
@@ -253,6 +258,7 @@ export default function ConfigPage() {
     setEditingId(client.id);
     setFormState({
       name: client.name ?? "",
+      aliases: client.aliases ?? [],
       region: client.region ?? REGIONS[0],
       product: client.product ?? PRODUCTS[0],
       tier: client.tier ?? TIERS[0],
@@ -262,11 +268,13 @@ export default function ConfigPage() {
       customSchemeLogo: client.customSchemeLogo ?? "",
       clientLogo: client.clientLogo ?? "",
     });
+    setAliasInput("");
   };
 
   const handleCancelEdit = () => {
     setEditingId(null);
     setFormState(createEmptyForm());
+    setAliasInput("");
   };
 
   const handleDeleteClient = (clientId) => {
@@ -274,6 +282,32 @@ export default function ConfigPage() {
     if (editingId === clientId) {
       handleCancelEdit();
     }
+  };
+
+  const handleAddAlias = () => {
+    const trimmedAlias = aliasInput.trim();
+    if (!trimmedAlias) {
+      return;
+    }
+    const exists = formState.aliases.some(
+      (alias) => alias.toLowerCase() === trimmedAlias.toLowerCase()
+    );
+    if (exists) {
+      setAliasInput("");
+      return;
+    }
+    setFormState((prev) => ({
+      ...prev,
+      aliases: [...prev.aliases, trimmedAlias],
+    }));
+    setAliasInput("");
+  };
+
+  const handleRemoveAlias = (aliasToRemove) => {
+    setFormState((prev) => ({
+      ...prev,
+      aliases: prev.aliases.filter((alias) => alias !== aliasToRemove),
+    }));
   };
 
   const handleExport = () => {
@@ -435,6 +469,51 @@ export default function ConfigPage() {
                 }
                 placeholder="Client name"
               />
+            </div>
+            <div className="col-12">
+              <label className="form-label" htmlFor="client-aliases">
+                Client aliases
+              </label>
+              <div className="input-group">
+                <input
+                  id="client-aliases"
+                  className="form-control"
+                  type="text"
+                  value={aliasInput}
+                  onChange={(event) => setAliasInput(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      handleAddAlias();
+                    }
+                  }}
+                  placeholder="Add an alias and press Enter"
+                />
+                <button
+                  className="btn btn-outline-secondary"
+                  type="button"
+                  onClick={handleAddAlias}
+                >
+                  Add alias
+                </button>
+              </div>
+              {formState.aliases.length > 0 ? (
+                <div className="d-flex flex-wrap gap-2 mt-2">
+                  {formState.aliases.map((alias) => (
+                    <span key={alias} className="badge text-bg-light border">
+                      {alias}
+                      <button
+                        className="btn btn-sm btn-link text-danger ms-1 p-0"
+                        type="button"
+                        onClick={() => handleRemoveAlias(alias)}
+                        aria-label={`Remove alias ${alias}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              ) : null}
             </div>
             <div className="col-md-6">
               <label className="form-label" htmlFor="client-region">
