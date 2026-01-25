@@ -101,11 +101,19 @@ body {
 }
 
 .client-card.status-risk {
-  box-shadow: 0 24px 35px rgba(65, 21, 6, 0.35);
+  background: linear-gradient(160deg, #f08b72 0%, #da4a34 58%, #b83225 100%);
+  box-shadow: 0 24px 35px rgba(78, 19, 10, 0.35);
+  color: #3b1008;
 }
 
 .client-card.status-watch {
   box-shadow: 0 24px 35px rgba(95, 55, 6, 0.35);
+}
+
+.client-card.status-healthy {
+  background: linear-gradient(160deg, #8fd6a7 0%, #44ad6d 58%, #2f7d4a 100%);
+  box-shadow: 0 24px 35px rgba(12, 55, 34, 0.35);
+  color: #0f2f1d;
 }
 
 .client-card__header {
@@ -181,6 +189,59 @@ body {
   padding: 0.85rem 0.9rem;
   border: 1px solid rgba(181, 110, 30, 0.35);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3);
+}
+
+.client-card.status-watch .client-card__tile {
+  background: linear-gradient(180deg, rgba(255, 240, 210, 0.92) 0%, rgba(248, 214, 164, 0.92) 100%);
+  border-color: rgba(181, 110, 30, 0.3);
+}
+
+.client-card.status-watch .client-card__tile:nth-child(2) {
+  background: linear-gradient(180deg, rgba(255, 231, 191, 0.94) 0%, rgba(250, 210, 146, 0.9) 100%);
+}
+
+.client-card.status-watch .client-card__tile:nth-child(3) {
+  background: linear-gradient(180deg, rgba(255, 246, 220, 0.94) 0%, rgba(244, 206, 150, 0.9) 100%);
+}
+
+.client-card.status-watch .client-card__tile:nth-child(4) {
+  background: linear-gradient(180deg, rgba(255, 236, 196, 0.94) 0%, rgba(243, 200, 132, 0.9) 100%);
+}
+
+.client-card.status-risk .client-card__tile {
+  background: linear-gradient(180deg, rgba(255, 231, 225, 0.95) 0%, rgba(252, 204, 190, 0.92) 100%);
+  border-color: rgba(178, 75, 65, 0.35);
+  color: #4c1a12;
+}
+
+.client-card.status-risk .client-card__tile:nth-child(2) {
+  background: linear-gradient(180deg, rgba(255, 237, 232, 0.95) 0%, rgba(246, 198, 186, 0.92) 100%);
+}
+
+.client-card.status-risk .client-card__tile:nth-child(3) {
+  background: linear-gradient(180deg, rgba(255, 227, 219, 0.95) 0%, rgba(243, 188, 175, 0.92) 100%);
+}
+
+.client-card.status-risk .client-card__tile:nth-child(4) {
+  background: linear-gradient(180deg, rgba(255, 244, 238, 0.95) 0%, rgba(248, 206, 195, 0.92) 100%);
+}
+
+.client-card.status-healthy .client-card__tile {
+  background: linear-gradient(180deg, rgba(230, 250, 238, 0.95) 0%, rgba(199, 237, 214, 0.92) 100%);
+  border-color: rgba(74, 151, 102, 0.35);
+  color: #13422b;
+}
+
+.client-card.status-healthy .client-card__tile:nth-child(2) {
+  background: linear-gradient(180deg, rgba(238, 252, 244, 0.95) 0%, rgba(198, 233, 210, 0.92) 100%);
+}
+
+.client-card.status-healthy .client-card__tile:nth-child(3) {
+  background: linear-gradient(180deg, rgba(227, 248, 236, 0.95) 0%, rgba(186, 226, 202, 0.92) 100%);
+}
+
+.client-card.status-healthy .client-card__tile:nth-child(4) {
+  background: linear-gradient(180deg, rgba(241, 252, 246, 0.95) 0%, rgba(204, 235, 216, 0.92) 100%);
 }
 
 .tile-header {
