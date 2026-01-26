@@ -44,6 +44,8 @@ const createEmptyForm = () => ({
   region: REGIONS[0],
   product: PRODUCTS[0],
   tier: TIERS[0],
+  technicalAccountManager: "",
+  accountManager: "",
   status: "Green",
   summary: "",
   schemes: [],
@@ -208,6 +210,8 @@ export default function ConfigPage() {
       region: formState.region,
       product: formState.product,
       tier: formState.tier,
+      technicalAccountManager: formState.technicalAccountManager.trim(),
+      accountManager: formState.accountManager.trim(),
       schemes: formState.schemes,
       customSchemeLogo: formState.customSchemeLogo,
       clientLogo: formState.clientLogo,
@@ -262,6 +266,8 @@ export default function ConfigPage() {
       region: client.region ?? REGIONS[0],
       product: client.product ?? PRODUCTS[0],
       tier: client.tier ?? TIERS[0],
+      technicalAccountManager: client.technicalAccountManager ?? "",
+      accountManager: client.accountManager ?? "",
       status: client.currentStatus ?? "Green",
       summary: client.summary ?? "",
       schemes: client.schemes ?? [],
@@ -571,6 +577,42 @@ export default function ConfigPage() {
                   </option>
                 ))}
               </select>
+            </div>
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="client-tam">
+                Technical Account Manager
+              </label>
+              <input
+                id="client-tam"
+                className="form-control"
+                type="text"
+                value={formState.technicalAccountManager}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    technicalAccountManager: event.target.value,
+                  }))
+                }
+                placeholder="Assigned TAM"
+              />
+            </div>
+            <div className="col-md-6">
+              <label className="form-label" htmlFor="client-am">
+                Account Manager
+              </label>
+              <input
+                id="client-am"
+                className="form-control"
+                type="text"
+                value={formState.accountManager}
+                onChange={(event) =>
+                  setFormState((prev) => ({
+                    ...prev,
+                    accountManager: event.target.value,
+                  }))
+                }
+                placeholder="Assigned AM"
+              />
             </div>
             <div className="col-md-6">
               <label className="form-label" htmlFor="client-status">
