@@ -10,9 +10,9 @@ body {
 }
 
 .app-navbar {
-  background: linear-gradient(135deg, #2e3550 0%, #1f2538 100%);
-  box-shadow: 0 14px 30px rgba(15, 18, 28, 0.45);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.18);
+  background: linear-gradient(135deg, #f2a01e 0%, #e57f18 100%);
+  box-shadow: 0 14px 30px rgba(34, 24, 9, 0.35);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.4);
 }
 
 .app-eyebrow {
