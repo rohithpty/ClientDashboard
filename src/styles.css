@@ -560,6 +560,51 @@ body {
   gap: 0.75rem;
 }
 
+.client-card__status-actions {
+  position: relative;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.client-card__add-status {
+  border-radius: 999px;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  color: #4b2a07;
+}
+
+.status-popover {
+  position: absolute;
+  top: 2.2rem;
+  right: 0;
+  width: 260px;
+  z-index: 5;
+  padding: 0.85rem;
+  border-radius: 16px;
+  background: rgba(255, 248, 235, 0.98);
+  border: 1px solid rgba(181, 110, 30, 0.35);
+  box-shadow: 0 16px 24px rgba(13, 8, 3, 0.3);
+  text-align: left;
+}
+
+.status-popover__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.status-popover__textarea {
+  min-height: 120px;
+}
+
+.status-popover__footer {
+  margin-top: 0.6rem;
+  display: flex;
+  justify-content: flex-end;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;

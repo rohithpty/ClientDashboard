@@ -46,7 +46,7 @@ const buildEmptyForm = (config) => ({
   tier: TIERS[0],
   technicalAccountManager: config.technicalAccountManagers[0] ?? "",
   accountManager: config.accountManagers[0] ?? "",
-  status: "Green",
+  status: "",
   summary: "",
   schemes: [],
   customSchemeLogo: "",
@@ -352,6 +352,7 @@ export default function ConfigPage() {
     }
     const trimmedName = formState.name.trim();
     const today = new Date().toISOString().slice(0, 10);
+    const statusValue = formState.status?.trim();
     const payload = {
       name: trimmedName,
       aliases: formState.aliases,
@@ -364,26 +365,30 @@ export default function ConfigPage() {
       schemes: formState.schemes,
       customSchemeLogo: formState.customSchemeLogo,
       clientLogo: formState.clientLogo,
-      currentStatus: formState.status,
       summary: formState.summary.trim() || "New client added.",
     };
 
     if (editingId) {
-      updateClient(editingId, payload);
+      updateClient(editingId, {
+        ...payload,
+        ...(statusValue ? { currentStatus: statusValue } : {}),
+      });
       setEditingId(null);
       setFormState(buildEmptyForm(config));
       setAliasInput("");
       return;
     }
 
+    const newStatus = statusValue || "Green";
     addClient({
       id: `client-${Date.now()}`,
       ...payload,
+      currentStatus: newStatus,
       metrics: defaultMetrics,
       history: [
         {
           week: today,
-          status: formState.status,
+          status: newStatus,
           note: formState.summary.trim() || "Initial onboarding update.",
         },
       ],
@@ -418,7 +423,7 @@ export default function ConfigPage() {
       tier: client.tier ?? TIERS[0],
       technicalAccountManager: client.technicalAccountManager ?? "Unassigned",
       accountManager: client.accountManager ?? "Unassigned",
-      status: client.currentStatus ?? "Green",
+      status: "",
       summary: client.summary ?? "",
       schemes: client.schemes ?? [],
       customSchemeLogo: client.customSchemeLogo ?? "",
@@ -467,13 +472,18 @@ export default function ConfigPage() {
   };
 
   const handleExport = () => {
-    const blob = new Blob([JSON.stringify(clients, null, 2)], {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      config,
+      clients,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
       type: "application/json",
     });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
-    anchor.download = "clients-export.json";
+    anchor.download = "admin-center-export.json";
     anchor.click();
     URL.revokeObjectURL(url);
   };
@@ -490,10 +500,27 @@ export default function ConfigPage() {
       }
       try {
         const parsed = JSON.parse(reader.result);
-        if (!Array.isArray(parsed)) {
-          throw new Error("Import file must be an array of clients.");
+        if (Array.isArray(parsed)) {
+          replaceClients(parsed);
+          setImportError("");
+          return;
         }
-        replaceClients(parsed);
+        if (!parsed || typeof parsed !== "object") {
+          throw new Error("Import file must be an object with config and clients.");
+        }
+        if (Array.isArray(parsed.config)) {
+          throw new Error("Config should be an object, not a list.");
+        }
+        if (!Array.isArray(parsed.clients)) {
+          throw new Error("Import file must include a clients list.");
+        }
+        if (parsed.config) {
+          setConfig((prev) => ({
+            ...prev,
+            ...parsed.config,
+          }));
+        }
+        replaceClients(parsed.clients);
         setImportError("");
       } catch (error) {
         setImportError(error.message || "Unable to import data.");
@@ -1042,7 +1069,7 @@ export default function ConfigPage() {
             </div>
             <div className="col-md-6">
               <label className="form-label" htmlFor="client-status">
-                Initial status
+                Status (optional)
               </label>
               <select
                 id="client-status"
@@ -1052,6 +1079,7 @@ export default function ConfigPage() {
                   setFormState((prev) => ({ ...prev, status: event.target.value }))
                 }
               >
+                <option value="">Select status</option>
                 {STATUS_OPTIONS.map((option) => (
                   <option key={option} value={option}>
                     {option}
