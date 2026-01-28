@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import RichTextContent from "./RichTextContent.jsx";
 import afsLogo from "../assets/schemes/afs.svg";
 import jetcoLogo from "../assets/schemes/jetco.svg";
 import jonetCortexLogo from "../assets/schemes/jonet-cortex.svg";
@@ -89,7 +90,7 @@ export default function ClientCard({ client }) {
           </div>
         </div>
       </header>
-      <p className="client-card__summary">{client.summary}</p>
+      <RichTextContent className="client-card__summary" html={client.summary} />
       <div className="client-card__grid">
         <section className="client-card__tile">
           <div className="tile-header">
