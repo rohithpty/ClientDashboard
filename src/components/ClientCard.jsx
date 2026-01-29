@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import afsLogo from "../assets/schemes/afs.svg";
 import jetcoLogo from "../assets/schemes/jetco.svg";
@@ -6,6 +7,7 @@ import madaLogo from "../assets/schemes/mada.svg";
 import mastercardLogo from "../assets/schemes/mastercard.svg";
 import uaeLogo from "../assets/schemes/uae.svg";
 import visaLogo from "../assets/schemes/visa.svg";
+import { useClients } from "../state/ClientsContext.jsx";
 
 const schemeLogoMap = {
   Mastercard: mastercardLogo,
@@ -18,6 +20,10 @@ const schemeLogoMap = {
 };
 
 export default function ClientCard({ client }) {
+  const { addStatusUpdate } = useClients();
+  const [isStatusOpen, setIsStatusOpen] = useState(false);
+  const [statusValue, setStatusValue] = useState(client.currentStatus ?? "Green");
+  const [statusNote, setStatusNote] = useState("");
   const ticketSummary = `L1: ${client.metrics.tickets.L1}, L2: ${client.metrics.tickets.L2}, L3: ${client.metrics.tickets.L3} | >30d: ${client.metrics.tickets.olderThan30}, >60d: ${client.metrics.tickets.olderThan60}`;
   const totalTickets =
     client.metrics.tickets.L1 + client.metrics.tickets.L2 + client.metrics.tickets.L3;
@@ -49,6 +55,25 @@ export default function ClientCard({ client }) {
         ? "Watch"
         : "Healthy";
   const incidentOver30Class = incidentSummary.over30 > 0 ? "text-danger" : "text-muted";
+  const statusOptions = ["Red", "Amber", "Green"];
+
+  const handleToggleStatus = () => {
+    setIsStatusOpen((prev) => !prev);
+    setStatusValue(client.currentStatus ?? "Green");
+  };
+
+  const handleSubmitStatus = () => {
+    if (!statusNote.trim()) {
+      return;
+    }
+    addStatusUpdate(client.id, {
+      week: new Date().toISOString().slice(0, 10),
+      status: statusValue,
+      note: statusNote.trim(),
+    });
+    setStatusNote("");
+    setIsStatusOpen(false);
+  };
 
   return (
     <article className={`client-card status-${statusTone}`}>
@@ -70,6 +95,65 @@ export default function ClientCard({ client }) {
             <i className="bi bi-exclamation-triangle-fill" aria-hidden="true"></i>
             Status: {statusLabel}
           </span>
+          <div className="client-card__status-actions">
+            <button
+              className="btn btn-light btn-sm client-card__add-status"
+              type="button"
+              onClick={handleToggleStatus}
+              aria-expanded={isStatusOpen}
+            >
+              +
+            </button>
+            {isStatusOpen ? (
+              <div className="status-popover">
+                <div className="status-popover__header">
+                  <strong>Add latest status</strong>
+                  <button
+                    className="btn btn-sm btn-link text-danger"
+                    type="button"
+                    onClick={() => setIsStatusOpen(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+                <label className="form-label small" htmlFor={`status-select-${client.id}`}>
+                  Status
+                </label>
+                <select
+                  id={`status-select-${client.id}`}
+                  className="form-select form-select-sm mb-2"
+                  value={statusValue}
+                  onChange={(event) => setStatusValue(event.target.value)}
+                >
+                  {statusOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <label className="form-label small" htmlFor={`status-note-${client.id}`}>
+                  Update note
+                </label>
+                <textarea
+                  id={`status-note-${client.id}`}
+                  className="form-control status-popover__textarea"
+                  rows={4}
+                  value={statusNote}
+                  onChange={(event) => setStatusNote(event.target.value)}
+                  placeholder="Share the latest status update..."
+                />
+                <div className="status-popover__footer">
+                  <button
+                    className="btn btn-amber btn-sm"
+                    type="button"
+                    onClick={handleSubmitStatus}
+                  >
+                    Save update
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
           <div className="scheme-logos">
             {schemes.map((scheme) => (
               <img
