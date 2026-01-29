@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { localClientsRepository } from "../data/clientsRepository.js";
+import { toRichTextHtml } from "../utils/richText.js";
 
 const ClientsContext = createContext(null);
 
@@ -34,11 +35,36 @@ export const ClientsProvider = ({ children }) => {
         if (client.id !== id) {
           return client;
         }
-        const history = [...client.history, update];
+        const normalizedNote = toRichTextHtml(update.note);
+        const history = [...client.history, { ...update, note: normalizedNote }];
         return {
           ...client,
           currentStatus: update.status,
-          summary: update.note,
+          summary: normalizedNote,
+          history,
+        };
+      }),
+    );
+  };
+
+  const updateStatusUpdate = (id, index, update) => {
+    setClients((prev) =>
+      prev.map((client) => {
+        if (client.id !== id) {
+          return client;
+        }
+        const history = client.history.map((entry, entryIndex) => {
+          if (entryIndex !== index) {
+            return entry;
+          }
+          const normalizedNote = toRichTextHtml(update.note);
+          return { ...entry, ...update, note: normalizedNote };
+        });
+        const latest = history[history.length - 1] ?? client;
+        return {
+          ...client,
+          currentStatus: latest.status ?? client.currentStatus,
+          summary: latest.note ?? client.summary,
           history,
         };
       }),
@@ -53,6 +79,7 @@ export const ClientsProvider = ({ children }) => {
       removeClient,
       replaceClients,
       addStatusUpdate,
+      updateStatusUpdate,
     }),
     [clients],
   );
