@@ -2,6 +2,9 @@ import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useClients } from "../state/ClientsContext.jsx";
 import { getReportData } from "../data/reportRepository.js";
+import PlatformModal from "../components/PlatformModal.jsx";
+import { localConfigRepository } from "../data/configRepository.js";
+import { computeClientScores, rollupClientStatus } from "../utils/scoring.js";
 
 const STATUS_OPTIONS = ["Red", "Amber", "Green"];
 const formatWeek = () => new Date().toISOString().slice(0, 10);
@@ -62,6 +65,58 @@ const buildTicketSummary = (records) => {
   return counts;
 };
 
+const buildMockTicketSummary = (tickets) => {
+  const counts = {
+    total: tickets.length,
+    rca: 0,
+    over7: 0,
+    over30: 0,
+    over60: 0,
+    over90: 0,
+  };
+
+  tickets.forEach((ticket) => {
+    const createdDate = new Date(ticket.createdDate);
+    const ageInDays = Math.floor((Date.now() - createdDate.getTime()) / 86400000);
+    
+    if (ageInDays > 7) {
+      counts.over7 += 1;
+    }
+    if (ageInDays > 30) {
+      counts.over30 += 1;
+    }
+    if (ageInDays > 60) {
+      counts.over60 += 1;
+    }
+    if (ageInDays > 90) {
+      counts.over90 += 1;
+    }
+  });
+
+  return counts;
+};
+
+const getPriorityBreakdown = (tickets) => {
+  return {
+    critical: tickets.filter(t => t.priority === "Critical").length,
+    high: tickets.filter(t => t.priority === "High").length,
+    medium: tickets.filter(t => t.priority === "Medium").length,
+    low: tickets.filter(t => t.priority === "Low").length,
+  };
+};
+
+const PriorityBadges = ({ priorities }) => (
+  <div style={{ fontSize: "12px", marginTop: "8px", color: "#666", lineHeight: "1.6", marginBottom: "0" }}>
+    <span style={{ marginRight: "4px" }}>🔴 Critical: {priorities.critical}</span>
+    <span style={{ marginRight: "6px" }}>│</span>
+    <span style={{ marginRight: "4px" }}>🟠 High: {priorities.high}</span>
+    <span style={{ marginRight: "6px" }}>│</span>
+    <span style={{ marginRight: "4px" }}>🟡 Med: {priorities.medium}</span>
+    <span style={{ marginRight: "6px" }}>│</span>
+    <span>🟢 Low: {priorities.low}</span>
+  </div>
+);
+
 const getStatusTone = (status) => {
   if (status === "Red") {
     return "risk";
@@ -78,6 +133,7 @@ export default function ClientDetailPage() {
   const client = useMemo(() => clients.find((item) => item.id === id), [clients, id]);
   const [status, setStatus] = useState("Green");
   const [note, setNote] = useState("");
+  const [modalState, setModalState] = useState({ isOpen: false, platform: null });
 
   if (!client) {
     return (
@@ -103,7 +159,6 @@ export default function ClientDetailPage() {
     setNote("");
   };
 
-  const statusTone = getStatusTone(client.currentStatus);
   const candidateNames = useMemo(() => {
     const aliases = client.aliases ?? [];
     return [client.name, ...aliases].map(normalizeName).filter(Boolean);
@@ -120,11 +175,63 @@ export default function ClientDetailPage() {
       candidateNames.includes(normalizeName(record.organization)),
     );
   }, [candidateNames]);
+  const jiraRecords = useMemo(() => {
+    const records = getReportData("jiras").records;
+    return records.filter((record) =>
+      candidateNames.includes(normalizeName(record.organization)),
+    );
+  }, [candidateNames]);
+  const requestRecords = useMemo(() => {
+    const records = [
+      ...getReportData("product-requests").records,
+      ...getReportData("implementation-requests").records,
+    ];
+    return records.filter((record) =>
+      candidateNames.includes(normalizeName(record.organization)),
+    );
+  }, [candidateNames]);
+  const scoringConfig = localConfigRepository.getConfig().scoringConfig;
+  const cardScores = useMemo(
+    () =>
+      computeClientScores({
+        client,
+        tickets: supportRecords,
+        incidents: incidentRecords,
+        jiras: jiraRecords,
+        requests: requestRecords,
+        config: scoringConfig,
+      }),
+    [client, supportRecords, incidentRecords, jiraRecords, requestRecords, scoringConfig],
+  );
+  const displayStatus = rollupClientStatus(cardScores, scoringConfig);
+  const statusTone = getStatusTone(displayStatus);
+  
   const incidentSummary = useMemo(
     () => buildTicketSummary(incidentRecords),
     [incidentRecords],
   );
-  const supportSummary = useMemo(() => buildTicketSummary(supportRecords), [supportRecords]);
+  const supportSummary = useMemo(
+    () => buildTicketSummary(supportRecords),
+    [supportRecords],
+  );
+  
+  // Priority breakdown for each platform
+  const supportPriorities = useMemo(() => getPriorityBreakdown([]), []);
+  const incidentPriorities = useMemo(() => getPriorityBreakdown([]), []);
+  const jiraPriorities = useMemo(() => getPriorityBreakdown([]), []);
+  const wrikePriorities = useMemo(() => getPriorityBreakdown([]), []);
+  
+  // Calculate JIRA metrics from mock data
+  const jiraMetrics = useMemo(
+    () => ({
+      openCount: cardScores.jiras.counts?.openCount ?? 0,
+      critical: cardScores.jiras.counts?.criticalOver14d ?? 0,
+    }),
+    [cardScores],
+  );
+  
+  // Calculate Product request metrics from mock data
+  const productRequestMetrics = useMemo(() => 0, []);
   const recentIncidents = useMemo(
     () =>
       [...incidentRecords]
@@ -153,7 +260,7 @@ export default function ClientDetailPage() {
             {client.environment ?? "Unknown"}
           </p>
         </div>
-        <span className="detail-status-pill">Status: {client.currentStatus}</span>
+        <span className="detail-status-pill">Status: {displayStatus}</span>
       </header>
 
       <div className="detail-card">
@@ -162,10 +269,14 @@ export default function ClientDetailPage() {
       </div>
 
       <div className="detail-grid">
-        <div className="detail-card">
+        <button
+          className="detail-card"
+          type="button"
+          onClick={() => setModalState({ isOpen: true, platform: "zendesk" })}
+        >
           <h4 className="h6 d-flex align-items-center gap-2">
             <i className="bi bi-ticket-perforated" aria-hidden="true"></i>
-            Support tickets (imported)
+            Support tickets
           </h4>
           <p className="detail-stat">{supportSummary.total} total</p>
           <div className="detail-list">
@@ -174,11 +285,16 @@ export default function ClientDetailPage() {
             <span>&gt;30d: {supportSummary.over30}</span>
             <span>&gt;60d: {supportSummary.over60}</span>
           </div>
-        </div>
-        <div className="detail-card">
+          <PriorityBadges priorities={supportPriorities} />
+        </button>
+        <button
+          className="detail-card"
+          type="button"
+          onClick={() => setModalState({ isOpen: true, platform: "incidentIo" })}
+        >
           <h4 className="h6 d-flex align-items-center gap-2">
             <i className="bi bi-exclamation-triangle" aria-hidden="true"></i>
-            Incidents (imported)
+            Incidents
           </h4>
           <p className="detail-stat">{incidentSummary.total} total</p>
           <div className="detail-list">
@@ -187,24 +303,32 @@ export default function ClientDetailPage() {
             <span>&gt;30d: {incidentSummary.over30}</span>
             <span>&gt;60d: {incidentSummary.over60}</span>
           </div>
-        </div>
-        <div className="detail-card">
+          <PriorityBadges priorities={incidentPriorities} />
+        </button>
+        <button
+          className="detail-card"
+          type="button"
+          onClick={() => setModalState({ isOpen: true, platform: "jira" })}
+        >
           <h4 className="h6 d-flex align-items-center gap-2">
             <i className="bi bi-kanban" aria-hidden="true"></i>
             JIRA issues
           </h4>
-          <p className="detail-stat">Open: {client.metrics.jiras.openCount}</p>
-          <p className="mb-0 text-body-secondary">
-            Critical: {client.metrics.jiras.critical}
-          </p>
-        </div>
-        <div className="detail-card">
+          <p className="detail-stat">Open: {jiraMetrics.openCount} | Critical: {jiraMetrics.critical}</p>
+          <PriorityBadges priorities={jiraPriorities} />
+        </button>
+        <button
+          className="detail-card"
+          type="button"
+          onClick={() => setModalState({ isOpen: true, platform: "wrike" })}
+        >
           <h4 className="h6 d-flex align-items-center gap-2">
             <i className="bi bi-inbox" aria-hidden="true"></i>
             Product requests
           </h4>
-          <p className="detail-stat">Open requests: {client.metrics.requests}</p>
-        </div>
+          <p className="detail-stat">Open requests: {productRequestMetrics}</p>
+          <PriorityBadges priorities={wrikePriorities} />
+        </button>
       </div>
 
       <div className="detail-split">
@@ -329,6 +453,13 @@ export default function ClientDetailPage() {
           </button>
         </div>
       </form>
+
+      <PlatformModal
+        isOpen={modalState.isOpen}
+        onClose={() => setModalState({ isOpen: false, platform: null })}
+        client={client}
+        platform={modalState.platform}
+      />
     </section>
   );
 }
