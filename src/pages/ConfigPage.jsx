@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useClients } from "../state/ClientsContext.jsx";
 import { DEFAULT_SCORING_CONFIG, localConfigRepository } from "../data/configRepository.js";
@@ -370,7 +370,7 @@ export default function ConfigPage() {
     platformIntegrations: false,
   });
   const scoringAutoExpandedRef = useRef(false);
-  const pendingScrollRestore = useRef(null);
+  const hasAutoScrolledRef = useRef(false);
 
   useEffect(() => {
     document.body.dataset.theme = theme;
@@ -409,12 +409,16 @@ export default function ConfigPage() {
     if (!target || !ADMIN_CARD_IDS.includes(target)) {
       return;
     }
+    if (hasAutoScrolledRef.current) {
+      return;
+    }
     setExpandedCards((prev) => ({ ...prev, [target]: true }));
     window.requestAnimationFrame(() => {
       document
         .getElementById(`admin-card-${target}`)
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+    hasAutoScrolledRef.current = true;
   }, [location]);
 
   useEffect(() => {
@@ -632,18 +636,6 @@ export default function ConfigPage() {
     });
     setListInputs((prev) => ({ ...prev, [key]: "" }));
   };
-
-  const requestScrollRestore = () => {
-    pendingScrollRestore.current = window.scrollY;
-  };
-
-  useLayoutEffect(() => {
-    if (pendingScrollRestore.current === null) {
-      return;
-    }
-    window.scrollTo({ top: pendingScrollRestore.current });
-    pendingScrollRestore.current = null;
-  });
 
   const handleRemoveConfigItem = (key, value) => {
     setConfig((prev) => ({
@@ -1867,6 +1859,7 @@ export default function ConfigPage() {
         id={`admin-card-${id}`}
         className="card shadow-sm admin-card admin-card--collapsible"
         open={open}
+        data-tooltip-boundary
       >
         <summary
           className="admin-card__summary"
@@ -1924,7 +1917,6 @@ export default function ConfigPage() {
   };
 
   const handleTestConnection = async (platform) => {
-    requestScrollRestore();
     setTestingPlatform(platform);
     try {
       const result = await testConnection(platform);
@@ -1937,7 +1929,6 @@ export default function ConfigPage() {
       addToast(`Error testing connection: ${error.message}`, "error");
     } finally {
       setTestingPlatform(null);
-      requestScrollRestore();
     }
   };
 
@@ -3281,13 +3272,12 @@ export default function ConfigPage() {
                 min="1"
                 max="600"
                 value={rateLimitConfig.requestsPerMinute}
-                onChange={(event) => {
-                  requestScrollRestore();
+                onChange={(event) =>
                   setRateLimitConfig((prev) => ({
                     ...prev,
                     requestsPerMinute: parseInt(event.target.value) || 60,
-                  }));
-                }}
+                  }))
+                }
               />
               <small className="text-body-secondary d-block mt-1">
                 Limit requests to protect against rate limiting. Default: 60
@@ -3300,13 +3290,12 @@ export default function ConfigPage() {
                   type="checkbox"
                   id="rate-limit-enabled"
                   checked={rateLimitConfig.enabled}
-                  onChange={(event) => {
-                    requestScrollRestore();
+                  onChange={(event) =>
                     setRateLimitConfig((prev) => ({
                       ...prev,
                       enabled: event.target.checked,
-                    }));
-                  }}
+                    }))
+                  }
                 />
                 <label className="form-check-label" htmlFor="rate-limit-enabled">
                   <HelpInline text="Enable rate limiting" helpKey="rateLimitEnabled" />
@@ -3319,7 +3308,7 @@ export default function ConfigPage() {
         <div className="row g-4">
           {Object.entries(platformConfigs).map(([platform, config_item]) => (
             <div key={platform} className="col-lg-6">
-              <div className="border rounded-3 p-4">
+              <div className="border rounded-3 p-4" data-tooltip-boundary>
                 <div className="d-flex justify-content-between align-items-start mb-3">
                   <h5 className="h6 mb-0 text-capitalize">{platform}</h5>
                   <div className="form-check">
@@ -3328,13 +3317,12 @@ export default function ConfigPage() {
                       type="checkbox"
                       id={`${platform}-enabled`}
                       checked={config_item.enabled}
-                      onChange={(event) => {
-                        requestScrollRestore();
+                      onChange={(event) =>
                         setPlatformConfigs((prev) => ({
                           ...prev,
                           [platform]: { ...prev[platform], enabled: event.target.checked },
-                        }));
-                      }}
+                        }))
+                      }
                     />
                     <label className="form-check-label" htmlFor={`${platform}-enabled`}>
                       <HelpInline
@@ -3359,16 +3347,15 @@ export default function ConfigPage() {
                     type="password"
                     placeholder="Enter API key"
                     value={config_item.apiKey}
-                    onChange={(event) => {
-                      requestScrollRestore();
+                    onChange={(event) =>
                       setPlatformConfigs((prev) => ({
                         ...prev,
                         [platform]: {
                           ...prev[platform],
                           apiKey: event.target.value,
                         },
-                      }));
-                    }}
+                      }))
+                    }
                   />
                 </div>
 
@@ -3385,16 +3372,15 @@ export default function ConfigPage() {
                     type="url"
                     placeholder="https://..."
                     value={config_item.baseUrl}
-                    onChange={(event) => {
-                      requestScrollRestore();
+                    onChange={(event) =>
                       setPlatformConfigs((prev) => ({
                         ...prev,
                         [platform]: {
                           ...prev[platform],
                           baseUrl: event.target.value,
                         },
-                      }));
-                    }}
+                      }))
+                    }
                   />
                   <small className="text-body-secondary d-block mt-1">
                     {platform === "zendesk" && "e.g., https://your-domain.zendesk.com"}

@@ -33,12 +33,15 @@ export default function HelpTooltip({ id, text, placement = "top" }) {
         return;
       }
       const rect = bubble.getBoundingClientRect();
+      const boundary =
+        wrapperRef.current?.closest("[data-tooltip-boundary]") ?? document.documentElement;
+      const boundaryRect = boundary.getBoundingClientRect();
       const padding = 12;
       let nextShift = 0;
-      if (rect.left < padding) {
-        nextShift = padding - rect.left;
-      } else if (rect.right > window.innerWidth - padding) {
-        nextShift = window.innerWidth - padding - rect.right;
+      if (rect.left < boundaryRect.left + padding) {
+        nextShift = boundaryRect.left + padding - rect.left;
+      } else if (rect.right > boundaryRect.right - padding) {
+        nextShift = boundaryRect.right - padding - rect.right;
       }
       setShift(nextShift);
     };
