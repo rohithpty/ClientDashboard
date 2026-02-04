@@ -1,10 +1,13 @@
 import { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
+import RichTextContent from "../components/RichTextContent.jsx";
+import RichTextEditor from "../components/RichTextEditor.jsx";
 import { useClients } from "../state/ClientsContext.jsx";
 import { getReportData } from "../data/reportRepository.js";
 import PlatformModal from "../components/PlatformModal.jsx";
 import { localConfigRepository } from "../data/configRepository.js";
 import { computeClientScores, rollupClientStatus } from "../utils/scoring.js";
+import { isRichTextEmpty } from "../utils/richText.js";
 
 const STATUS_OPTIONS = ["Red", "Amber", "Green"];
 const formatWeek = () => new Date().toISOString().slice(0, 10);
@@ -129,11 +132,14 @@ const getStatusTone = (status) => {
 
 export default function ClientDetailPage() {
   const { id } = useParams();
-  const { clients, addStatusUpdate } = useClients();
+  const { clients, addStatusUpdate, updateStatusUpdate } = useClients();
   const client = useMemo(() => clients.find((item) => item.id === id), [clients, id]);
   const [status, setStatus] = useState("Green");
   const [note, setNote] = useState("");
   const [modalState, setModalState] = useState({ isOpen: false, platform: null });
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingStatus, setEditingStatus] = useState("Green");
+  const [editingNote, setEditingNote] = useState("");
 
   if (!client) {
     return (
@@ -148,17 +154,39 @@ export default function ClientDetailPage() {
 
   const handleSubmit = (event) => {
     event.preventDefault();
-    if (!note.trim()) {
+    if (isRichTextEmpty(note)) {
       return;
     }
     addStatusUpdate(client.id, {
       week: formatWeek(),
       status,
-      note: note.trim(),
+      note,
     });
     setNote("");
   };
 
+  const startEditing = (index) => {
+    const entry = client.history[index];
+    setEditingIndex(index);
+    setEditingStatus(entry.status);
+    setEditingNote(entry.note);
+  };
+
+  const cancelEditing = () => {
+    setEditingIndex(null);
+    setEditingNote("");
+  };
+
+  const handleUpdate = (index) => {
+    if (isRichTextEmpty(editingNote)) {
+      return;
+    }
+    updateStatusUpdate(client.id, index, {
+      status: editingStatus,
+      note: editingNote,
+    });
+    cancelEditing();
+  };
   const candidateNames = useMemo(() => {
     const aliases = client.aliases ?? [];
     return [client.name, ...aliases].map(normalizeName).filter(Boolean);
@@ -246,6 +274,8 @@ export default function ClientDetailPage() {
         .slice(0, 5),
     [supportRecords],
   );
+  const zendeskTicketBase = "https://paymentology.zendesk.com/agent/tickets";
+  const buildTicketUrl = (ticketId) => `${zendeskTicketBase}/${ticketId}`;
 
   return (
     <section className={`d-grid gap-4 detail-shell status-${statusTone}`}>
@@ -265,7 +295,7 @@ export default function ClientDetailPage() {
 
       <div className="detail-card">
         <h3 className="h5">Latest summary</h3>
-        <p className="mb-0">{client.summary}</p>
+        <RichTextContent html={client.summary} />
       </div>
 
       <div className="detail-grid">
@@ -345,9 +375,19 @@ export default function ClientDetailPage() {
                 {recentSupportTickets.map((record) => (
                   <li key={record.id}>
                     <div>
-                      <strong>{record.subject || "Untitled ticket"}</strong>
+                      <strong>
+                        <a
+                          className="detail-link"
+                          href={buildTicketUrl(record.id)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {record.subject || `Ticket #${record.id}`}
+                        </a>
+                      </strong>
                       <p className="mb-0">
-                        {record.ticketStatus} · Priority {record.priority || "N/A"}
+                        Ticket {record.id} · {record.ticketStatus} · Priority{" "}
+                        {record.priority || "N/A"}
                       </p>
                     </div>
                     <span>{formatDate(record.requested)}</span>
@@ -370,9 +410,19 @@ export default function ClientDetailPage() {
                 {recentIncidents.map((record) => (
                   <li key={record.id}>
                     <div>
-                      <strong>{record.subject || "Untitled incident"}</strong>
+                      <strong>
+                        <a
+                          className="detail-link"
+                          href={buildTicketUrl(record.id)}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          {record.subject || `Incident #${record.id}`}
+                        </a>
+                      </strong>
                       <p className="mb-0">
-                        {record.ticketStatus} · Priority {record.priority || "N/A"}
+                        Ticket {record.id} · {record.ticketStatus} · Priority{" "}
+                        {record.priority || "N/A"}
                       </p>
                     </div>
                     <span>{formatDate(record.requested)}</span>
@@ -394,7 +444,7 @@ export default function ClientDetailPage() {
           </div>
         </div>
         <ul className="detail-timeline">
-          {client.history.map((entry) => (
+          {client.history.map((entry, index) => (
             <li
               key={`${entry.week}-${entry.status}`}
               className="detail-timeline__item"
@@ -403,8 +453,68 @@ export default function ClientDetailPage() {
                 {entry.status}
               </span>
               <div>
-                <p className="fw-semibold mb-1">{entry.week}</p>
-                <p className="mb-0">{entry.note}</p>
+                <div className="detail-timeline__meta">
+                  <p className="fw-semibold mb-1">{entry.week}</p>
+                  <button
+                    type="button"
+                    className="btn btn-sm btn-outline-light"
+                    onClick={() => startEditing(index)}
+                  >
+                    Edit
+                  </button>
+                </div>
+                {editingIndex === index ? (
+                  <div className="detail-timeline__editor">
+                    <div className="detail-form">
+                      <div>
+                        <label className="form-label" htmlFor={`edit-status-${index}`}>
+                          Status
+                        </label>
+                        <select
+                          id={`edit-status-${index}`}
+                          className="form-select"
+                          value={editingStatus}
+                          onChange={(event) => setEditingStatus(event.target.value)}
+                        >
+                          {STATUS_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                              {option}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="form-label" htmlFor={`edit-note-${index}`}>
+                          Summary note
+                        </label>
+                        <RichTextEditor
+                          id={`edit-note-${index}`}
+                          value={editingNote}
+                          onChange={setEditingNote}
+                          placeholder="Update the weekly note..."
+                        />
+                      </div>
+                    </div>
+                    <div className="detail-form__footer">
+                      <button
+                        className="btn btn-amber"
+                        type="button"
+                        onClick={() => handleUpdate(index)}
+                      >
+                        Save update
+                      </button>
+                      <button
+                        className="btn btn-outline-light"
+                        type="button"
+                        onClick={cancelEditing}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <RichTextContent html={entry.note} />
+                )}
               </div>
             </li>
           ))}
@@ -437,12 +547,10 @@ export default function ClientDetailPage() {
             <label className="form-label" htmlFor="summary-note">
               Summary note
             </label>
-            <textarea
+            <RichTextEditor
               id="summary-note"
-              className="form-control"
-              rows={3}
               value={note}
-              onChange={(event) => setNote(event.target.value)}
+              onChange={setNote}
               placeholder="Describe the weekly update..."
             />
           </div>
