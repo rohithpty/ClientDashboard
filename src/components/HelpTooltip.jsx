@@ -4,7 +4,7 @@ export default function HelpTooltip({ id, text, placement = "top" }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
   const bubbleRef = useRef(null);
-  const [shift, setShift] = useState(0);
+  const [position, setPosition] = useState({ left: 0, top: 0, arrowLeft: 0 });
 
   useEffect(() => {
     if (!open) {
@@ -27,27 +27,30 @@ export default function HelpTooltip({ id, text, placement = "top" }) {
     if (!open) {
       return;
     }
-    const updateShift = () => {
+    const updatePosition = () => {
       const bubble = bubbleRef.current;
-      if (!bubble) {
+      const wrapper = wrapperRef.current;
+      if (!bubble || !wrapper) {
         return;
       }
-      const rect = bubble.getBoundingClientRect();
-      const boundary =
-        wrapperRef.current?.closest("[data-tooltip-boundary]") ?? document.documentElement;
-      const boundaryRect = boundary.getBoundingClientRect();
+      const bubbleRect = bubble.getBoundingClientRect();
+      const wrapperRect = wrapper.getBoundingClientRect();
       const padding = 12;
-      let nextShift = 0;
-      if (rect.left < boundaryRect.left + padding) {
-        nextShift = boundaryRect.left + padding - rect.left;
-      } else if (rect.right > boundaryRect.right - padding) {
-        nextShift = boundaryRect.right - padding - rect.right;
-      }
-      setShift(nextShift);
+      const preferredLeft =
+        wrapperRect.left + wrapperRect.width / 2 - bubbleRect.width / 2;
+      const minLeft = padding;
+      const maxLeft = window.innerWidth - padding - bubbleRect.width;
+      const left = Math.min(Math.max(preferredLeft, minLeft), maxLeft);
+      const top = wrapperRect.bottom + 8;
+      const arrowLeft = Math.min(
+        Math.max(wrapperRect.left + wrapperRect.width / 2 - left, 12),
+        bubbleRect.width - 12,
+      );
+      setPosition({ left, top, arrowLeft });
     };
-    updateShift();
-    window.addEventListener("resize", updateShift);
-    return () => window.removeEventListener("resize", updateShift);
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    return () => window.removeEventListener("resize", updatePosition);
   }, [open, text]);
 
   return (
@@ -81,7 +84,11 @@ export default function HelpTooltip({ id, text, placement = "top" }) {
         role="tooltip"
         className="help-tooltip__bubble"
         ref={bubbleRef}
-        style={{ "--tooltip-shift": `${shift}px` }}
+        style={{
+          left: `${position.left}px`,
+          top: `${position.top}px`,
+          "--tooltip-arrow-left": `${position.arrowLeft}px`,
+        }}
       >
         {text}
       </span>

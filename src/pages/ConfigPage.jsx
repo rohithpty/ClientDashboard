@@ -403,13 +403,13 @@ export default function ConfigPage() {
   }, [editingId]);
 
   useEffect(() => {
+    if (hasAutoScrolledRef.current) {
+      return;
+    }
     const hashTarget = location.hash ? location.hash.replace("#", "") : "";
     const stateTarget = location.state?.openCard || "";
     const target = stateTarget || hashTarget;
     if (!target || !ADMIN_CARD_IDS.includes(target)) {
-      return;
-    }
-    if (hasAutoScrolledRef.current) {
       return;
     }
     setExpandedCards((prev) => ({ ...prev, [target]: true }));
@@ -419,7 +419,7 @@ export default function ConfigPage() {
         ?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
     hasAutoScrolledRef.current = true;
-  }, [location]);
+  }, []);
 
   useEffect(() => {
     if (!expandedCards.scoring) {
