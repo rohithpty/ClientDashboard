@@ -695,13 +695,7 @@ export default function ConfigPage() {
       normalizedQuery ? option.toLowerCase().includes(normalizedQuery) : true,
     );
     const setOpenPreserveScroll = (nextOpen) => {
-      const y = window.scrollY;
       setStatusDropdownOpen((prev) => ({ ...prev, [id]: nextOpen }));
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          window.scrollTo({ top: y });
-        });
-      });
     };
 
     return (
