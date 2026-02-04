@@ -1,3 +1,4 @@
+html,
 body {
   background: radial-gradient(circle at top, #3b4258 0%, #242a3b 55%, #1d2232 100%);
   color: #20180f;
@@ -8,6 +9,10 @@ body {
 .app-shell {
   min-height: 100vh;
   color: #2b1d0d;
+  overflow-anchor: none;
+}
+
+#root {
   overflow-anchor: none;
 }
 
@@ -138,6 +143,12 @@ body {
   background: linear-gradient(180deg, rgba(255, 240, 210, 0.96) 0%, rgba(248, 214, 164, 0.92) 100%);
   border: 1px solid rgba(181, 110, 30, 0.35);
   box-shadow: 0 18px 24px rgba(7, 6, 4, 0.18);
+  overflow-anchor: none;
+}
+
+.admin-card *,
+.admin-list-card,
+.admin-list-card * {
   overflow-anchor: none;
 }
 
