@@ -576,10 +576,13 @@ export const testConnection = async (platform) => {
         return { success: false, message: `Unknown platform: ${platform}` };
     }
   } catch (error) {
-    if (error.message.includes("fetch")) {
-      return { success: false, message: "Network error - check base URL and network connection" };
+    if (error instanceof TypeError || error.message.includes("fetch")) {
+      return {
+        success: false,
+        message:
+          "Network/CORS error: browsers block direct API calls. Check base URL or use a server-side proxy.",
+      };
     }
     return { success: false, message: `Connection error: ${error.message}` };
   }
 };
-

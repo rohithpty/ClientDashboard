@@ -632,6 +632,14 @@ export default function ConfigPage() {
     setListInputs((prev) => ({ ...prev, [key]: "" }));
   };
 
+  const preserveScroll = (fn) => {
+    const y = window.scrollY;
+    fn();
+    requestAnimationFrame(() => {
+      window.scrollTo({ top: y });
+    });
+  };
+
   const handleRemoveConfigItem = (key, value) => {
     setConfig((prev) => ({
       ...prev,
@@ -1911,6 +1919,7 @@ export default function ConfigPage() {
   };
 
   const handleTestConnection = async (platform) => {
+    const y = window.scrollY;
     setTestingPlatform(platform);
     try {
       const result = await testConnection(platform);
@@ -1923,6 +1932,9 @@ export default function ConfigPage() {
       addToast(`Error testing connection: ${error.message}`, "error");
     } finally {
       setTestingPlatform(null);
+      requestAnimationFrame(() => {
+        window.scrollTo({ top: y });
+      });
     }
   };
 
@@ -3267,12 +3279,14 @@ export default function ConfigPage() {
                 max="600"
                 value={rateLimitConfig.requestsPerMinute}
                 onChange={(event) =>
-                  setRateLimitConfig((prev) => ({
-                    ...prev,
-                    requestsPerMinute: parseInt(event.target.value) || 60,
-                  }))
-                }
-              />
+                    preserveScroll(() =>
+                      setRateLimitConfig((prev) => ({
+                        ...prev,
+                        requestsPerMinute: parseInt(event.target.value) || 60,
+                      })),
+                    )
+                  }
+                />
               <small className="text-body-secondary d-block mt-1">
                 Limit requests to protect against rate limiting. Default: 60
               </small>
@@ -3285,10 +3299,12 @@ export default function ConfigPage() {
                   id="rate-limit-enabled"
                   checked={rateLimitConfig.enabled}
                   onChange={(event) =>
-                    setRateLimitConfig((prev) => ({
-                      ...prev,
-                      enabled: event.target.checked,
-                    }))
+                    preserveScroll(() =>
+                      setRateLimitConfig((prev) => ({
+                        ...prev,
+                        enabled: event.target.checked,
+                      })),
+                    )
                   }
                 />
                 <label className="form-check-label" htmlFor="rate-limit-enabled">
@@ -3312,10 +3328,12 @@ export default function ConfigPage() {
                       id={`${platform}-enabled`}
                       checked={config_item.enabled}
                       onChange={(event) =>
-                        setPlatformConfigs((prev) => ({
-                          ...prev,
-                          [platform]: { ...prev[platform], enabled: event.target.checked },
-                        }))
+                        preserveScroll(() =>
+                          setPlatformConfigs((prev) => ({
+                            ...prev,
+                            [platform]: { ...prev[platform], enabled: event.target.checked },
+                          })),
+                        )
                       }
                     />
                     <label className="form-check-label" htmlFor={`${platform}-enabled`}>
@@ -3342,13 +3360,15 @@ export default function ConfigPage() {
                     placeholder="Enter API key"
                     value={config_item.apiKey}
                     onChange={(event) =>
-                      setPlatformConfigs((prev) => ({
-                        ...prev,
-                        [platform]: {
-                          ...prev[platform],
-                          apiKey: event.target.value,
-                        },
-                      }))
+                      preserveScroll(() =>
+                        setPlatformConfigs((prev) => ({
+                          ...prev,
+                          [platform]: {
+                            ...prev[platform],
+                            apiKey: event.target.value,
+                          },
+                        })),
+                      )
                     }
                   />
                 </div>
@@ -3367,13 +3387,15 @@ export default function ConfigPage() {
                     placeholder="https://..."
                     value={config_item.baseUrl}
                     onChange={(event) =>
-                      setPlatformConfigs((prev) => ({
-                        ...prev,
-                        [platform]: {
-                          ...prev[platform],
-                          baseUrl: event.target.value,
-                        },
-                      }))
+                      preserveScroll(() =>
+                        setPlatformConfigs((prev) => ({
+                          ...prev,
+                          [platform]: {
+                            ...prev[platform],
+                            baseUrl: event.target.value,
+                          },
+                        })),
+                      )
                     }
                   />
                   <small className="text-body-secondary d-block mt-1">

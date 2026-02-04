@@ -3,6 +3,8 @@ import { useEffect, useRef, useState } from "react";
 export default function HelpTooltip({ id, text, placement = "top" }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
+  const bubbleRef = useRef(null);
+  const [shift, setShift] = useState(0);
 
   useEffect(() => {
     if (!open) {
@@ -20,6 +22,30 @@ export default function HelpTooltip({ id, text, placement = "top" }) {
       document.removeEventListener("touchstart", handleOutside);
     };
   }, [open]);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+    const updateShift = () => {
+      const bubble = bubbleRef.current;
+      if (!bubble) {
+        return;
+      }
+      const rect = bubble.getBoundingClientRect();
+      const padding = 12;
+      let nextShift = 0;
+      if (rect.left < padding) {
+        nextShift = padding - rect.left;
+      } else if (rect.right > window.innerWidth - padding) {
+        nextShift = window.innerWidth - padding - rect.right;
+      }
+      setShift(nextShift);
+    };
+    updateShift();
+    window.addEventListener("resize", updateShift);
+    return () => window.removeEventListener("resize", updateShift);
+  }, [open, text]);
 
   return (
     <span
@@ -47,7 +73,13 @@ export default function HelpTooltip({ id, text, placement = "top" }) {
       >
         ?
       </button>
-      <span id={id} role="tooltip" className="help-tooltip__bubble">
+      <span
+        id={id}
+        role="tooltip"
+        className="help-tooltip__bubble"
+        ref={bubbleRef}
+        style={{ "--tooltip-shift": `${shift}px` }}
+      >
         {text}
       </span>
     </span>
