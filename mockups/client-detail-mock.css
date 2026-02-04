@@ -1,0 +1,270 @@
+:root {
+  color-scheme: dark;
+  font-family: "Avenir Next", "Gill Sans", "Segoe UI", sans-serif;
+  --bg: #1b2232;
+  --panel: #2b1f25;
+  --surface: #f1dfd8;
+  --surface-alt: #f0dcd5;
+  --text-dark: #3b2c2c;
+  --text-light: #f5f5f5;
+  --red: #d55e00;
+  --amber: #e69f00;
+  --green: #009e73;
+  --orange: #d98a2f;
+  --orange-deep: #c97a24;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: radial-gradient(circle at top, #2f3a53, var(--bg) 60%);
+  color: var(--text-light);
+}
+
+.app {
+  min-height: 100vh;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 28px;
+  background: linear-gradient(90deg, var(--orange), var(--orange-deep));
+  color: #fff;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.eyebrow {
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+
+.brand-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.nav {
+  display: flex;
+  gap: 20px;
+}
+
+.nav-link {
+  color: #fff;
+  text-decoration: none;
+  font-weight: 600;
+  opacity: 0.8;
+}
+
+.nav-link.active {
+  opacity: 1;
+}
+
+.content {
+  padding: 28px;
+  display: grid;
+  gap: 18px;
+}
+
+.hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 24px 28px;
+  border-radius: 24px;
+  background: linear-gradient(120deg, #b84f2a, #8c2f1f);
+  box-shadow: 0 16px 30px rgba(0, 0, 0, 0.25);
+}
+
+.hero h1 {
+  margin: 8px 0 6px;
+  font-size: 32px;
+}
+
+.meta {
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.9;
+}
+
+.back-link {
+  color: #ffe6df;
+  text-decoration: none;
+  font-size: 14px;
+}
+
+.status-pill {
+  background: #f5e6dc;
+  color: var(--text-dark);
+  padding: 10px 16px;
+  border-radius: 18px;
+  font-weight: 600;
+}
+
+.summary-card {
+  background: var(--surface-alt);
+  color: var(--text-dark);
+  padding: 18px 22px;
+  border-radius: 18px;
+}
+
+.summary-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.summary-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--red);
+}
+
+.summary-card h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.summary-card p {
+  margin: 8px 0 0;
+}
+
+.kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.kpi-card {
+  background: var(--surface);
+  color: var(--text-dark);
+  padding: 18px;
+  border-radius: 18px;
+  display: grid;
+  gap: 8px;
+}
+
+.kpi-title {
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.kpi-value {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.kpi-secondary {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.kpi-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tag {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  background: #ead3cc;
+}
+
+.tag.critical { background: #f3c6b1; color: #7a3a12; }
+.tag.high { background: #f7d9a0; color: #7a4a07; }
+.tag.medium { background: #f7e7a2; color: #7a6a06; }
+.tag.low { background: #cfe8c8; color: #2b5b2d; }
+
+.panel-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.panel {
+  background: var(--panel);
+  border-radius: 18px;
+  padding: 18px 20px;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.panel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.panel-header h3 {
+  margin: 0;
+  font-size: 16px;
+}
+
+.panel-empty {
+  color: #c4b7bc;
+  margin: 14px 0 0;
+  font-size: 13px;
+}
+
+.timeline {
+  display: grid;
+  gap: 14px;
+}
+
+.timeline p {
+  margin: 4px 0 0;
+  color: #c4b7bc;
+}
+
+.timeline-row {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  padding-top: 6px;
+}
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #2b1f25;
+}
+
+.badge.red { background: #f3c6b1; }
+.badge.amber { background: #f7e7a2; }
+.badge.green { background: #cfe8c8; }
+
+.timeline-week {
+  font-weight: 600;
+}
+
+.timeline-note {
+  color: #d4c7cc;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .hero {
+    flex-direction: column;
+    gap: 16px;
+  }
+
+  .status-pill {
+    align-self: flex-start;
+  }
+}

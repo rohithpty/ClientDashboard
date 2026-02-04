@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Client Detail Mock</title>
+    <link rel="stylesheet" href="./client-detail-mock.css" />
+  </head>
+  <body>
+    <div class="app">
+      <header class="topbar">
+        <div class="brand">
+          <span class="eyebrow">Client Health</span>
+          <span class="brand-title">RAG Status Dashboard</span>
+        </div>
+        <nav class="nav">
+          <a class="nav-link active" href="#">Dashboard</a>
+          <a class="nav-link" href="#">Admin Center</a>
+        </nav>
+      </header>
+
+      <main class="content">
+        <section class="hero status-red">
+          <div class="hero-copy">
+            <a class="back-link" href="#">← Back to dashboard</a>
+            <h1>Aurora Pay</h1>
+            <p class="meta">Europe · VoucherEngine · Gold · Production</p>
+          </div>
+          <div class="status-pill">Status: Red</div>
+        </section>
+
+        <section class="summary-card">
+          <div class="summary-header">
+            <span class="summary-dot"></span>
+            <h2>Latest summary</h2>
+          </div>
+          <p>Payment gateway latency spikes; fix rolling out.</p>
+        </section>
+
+        <section class="kpi-grid">
+          <article class="kpi-card">
+            <div class="kpi-title">🎟️ Support tickets</div>
+            <div class="kpi-value">4 total</div>
+            <div class="kpi-secondary">&gt;7d: 2 · &gt;30d: 0 · &gt;60d: 0</div>
+            <div class="kpi-tags">
+              <span class="tag critical">Critical 1</span>
+              <span class="tag high">High 2</span>
+              <span class="tag medium">Med 1</span>
+              <span class="tag low">Low 0</span>
+            </div>
+          </article>
+          <article class="kpi-card">
+            <div class="kpi-title">⚠️ Incidents</div>
+            <div class="kpi-value">3 total</div>
+            <div class="kpi-secondary">&gt;7d: 1 · &gt;30d: 1 · &gt;60d: 0</div>
+            <div class="kpi-tags">
+              <span class="tag critical">Critical 1</span>
+              <span class="tag high">High 1</span>
+              <span class="tag medium">Med 0</span>
+              <span class="tag low">Low 1</span>
+            </div>
+          </article>
+          <article class="kpi-card">
+            <div class="kpi-title">🗂️ JIRA issues</div>
+            <div class="kpi-value">Open: 1 · Critical: 0</div>
+            <div class="kpi-secondary">Last 30 days activity</div>
+            <div class="kpi-tags">
+              <span class="tag critical">Critical 0</span>
+              <span class="tag high">High 1</span>
+              <span class="tag medium">Med 2</span>
+              <span class="tag low">Low 0</span>
+            </div>
+          </article>
+          <article class="kpi-card">
+            <div class="kpi-title">📥 Product requests</div>
+            <div class="kpi-value">Open requests: 1</div>
+            <div class="kpi-secondary">Updated 2 days ago</div>
+            <div class="kpi-tags">
+              <span class="tag critical">Critical 0</span>
+              <span class="tag high">High 0</span>
+              <span class="tag medium">Med 1</span>
+              <span class="tag low">Low 1</span>
+            </div>
+          </article>
+        </section>
+
+        <section class="panel-grid">
+          <article class="panel">
+            <header class="panel-header">
+              <h3>Recent support tickets</h3>
+              <span>0 total</span>
+            </header>
+            <p class="panel-empty">No imported support tickets.</p>
+          </article>
+          <article class="panel">
+            <header class="panel-header">
+              <h3>Recent incidents</h3>
+              <span>0 total</span>
+            </header>
+            <p class="panel-empty">No imported incidents.</p>
+          </article>
+        </section>
+
+        <section class="panel timeline">
+          <header class="panel-header">
+            <div>
+              <h3>Weekly status timeline</h3>
+              <p>Chronological history of weekly health updates.</p>
+            </div>
+          </header>
+          <div class="timeline-row">
+            <span class="badge red">Red</span>
+            <div>
+              <div class="timeline-week">2026-01-31</div>
+              <div class="timeline-note">Latency spikes, mitigation in progress.</div>
+            </div>
+          </div>
+          <div class="timeline-row">
+            <span class="badge amber">Amber</span>
+            <div>
+              <div class="timeline-week">2026-01-24</div>
+              <div class="timeline-note">Intermittent retries observed in EU.</div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </body>
+</html>
