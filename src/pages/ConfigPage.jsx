@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useClients } from "../state/ClientsContext.jsx";
 import { DEFAULT_SCORING_CONFIG, localConfigRepository } from "../data/configRepository.js";
@@ -370,6 +370,7 @@ export default function ConfigPage() {
     platformIntegrations: false,
   });
   const scoringAutoExpandedRef = useRef(false);
+  const pendingScrollRestore = useRef(null);
 
   useEffect(() => {
     document.body.dataset.theme = theme;
@@ -632,13 +633,17 @@ export default function ConfigPage() {
     setListInputs((prev) => ({ ...prev, [key]: "" }));
   };
 
-  const preserveScroll = (fn) => {
-    const y = window.scrollY;
-    fn();
-    requestAnimationFrame(() => {
-      window.scrollTo({ top: y });
-    });
+  const requestScrollRestore = () => {
+    pendingScrollRestore.current = window.scrollY;
   };
+
+  useLayoutEffect(() => {
+    if (pendingScrollRestore.current === null) {
+      return;
+    }
+    window.scrollTo({ top: pendingScrollRestore.current });
+    pendingScrollRestore.current = null;
+  });
 
   const handleRemoveConfigItem = (key, value) => {
     setConfig((prev) => ({
@@ -1919,7 +1924,7 @@ export default function ConfigPage() {
   };
 
   const handleTestConnection = async (platform) => {
-    const y = window.scrollY;
+    requestScrollRestore();
     setTestingPlatform(platform);
     try {
       const result = await testConnection(platform);
@@ -1932,9 +1937,7 @@ export default function ConfigPage() {
       addToast(`Error testing connection: ${error.message}`, "error");
     } finally {
       setTestingPlatform(null);
-      requestAnimationFrame(() => {
-        window.scrollTo({ top: y });
-      });
+      requestScrollRestore();
     }
   };
 
@@ -3279,12 +3282,11 @@ export default function ConfigPage() {
                 max="600"
                 value={rateLimitConfig.requestsPerMinute}
                 onChange={(event) =>
-                    preserveScroll(() =>
-                      setRateLimitConfig((prev) => ({
-                        ...prev,
-                        requestsPerMinute: parseInt(event.target.value) || 60,
-                      })),
-                    )
+                    requestScrollRestore();
+                    setRateLimitConfig((prev) => ({
+                      ...prev,
+                      requestsPerMinute: parseInt(event.target.value) || 60,
+                    }))
                   }
                 />
               <small className="text-body-secondary d-block mt-1">
@@ -3299,12 +3301,11 @@ export default function ConfigPage() {
                   id="rate-limit-enabled"
                   checked={rateLimitConfig.enabled}
                   onChange={(event) =>
-                    preserveScroll(() =>
-                      setRateLimitConfig((prev) => ({
-                        ...prev,
-                        enabled: event.target.checked,
-                      })),
-                    )
+                    requestScrollRestore();
+                    setRateLimitConfig((prev) => ({
+                      ...prev,
+                      enabled: event.target.checked,
+                    }))
                   }
                 />
                 <label className="form-check-label" htmlFor="rate-limit-enabled">
@@ -3328,12 +3329,11 @@ export default function ConfigPage() {
                       id={`${platform}-enabled`}
                       checked={config_item.enabled}
                       onChange={(event) =>
-                        preserveScroll(() =>
-                          setPlatformConfigs((prev) => ({
-                            ...prev,
-                            [platform]: { ...prev[platform], enabled: event.target.checked },
-                          })),
-                        )
+                        requestScrollRestore();
+                        setPlatformConfigs((prev) => ({
+                          ...prev,
+                          [platform]: { ...prev[platform], enabled: event.target.checked },
+                        }))
                       }
                     />
                     <label className="form-check-label" htmlFor={`${platform}-enabled`}>
@@ -3360,15 +3360,14 @@ export default function ConfigPage() {
                     placeholder="Enter API key"
                     value={config_item.apiKey}
                     onChange={(event) =>
-                      preserveScroll(() =>
-                        setPlatformConfigs((prev) => ({
-                          ...prev,
-                          [platform]: {
-                            ...prev[platform],
-                            apiKey: event.target.value,
-                          },
-                        })),
-                      )
+                      requestScrollRestore();
+                      setPlatformConfigs((prev) => ({
+                        ...prev,
+                        [platform]: {
+                          ...prev[platform],
+                          apiKey: event.target.value,
+                        },
+                      }))
                     }
                   />
                 </div>
@@ -3387,15 +3386,14 @@ export default function ConfigPage() {
                     placeholder="https://..."
                     value={config_item.baseUrl}
                     onChange={(event) =>
-                      preserveScroll(() =>
-                        setPlatformConfigs((prev) => ({
-                          ...prev,
-                          [platform]: {
-                            ...prev[platform],
-                            baseUrl: event.target.value,
-                          },
-                        })),
-                      )
+                      requestScrollRestore();
+                      setPlatformConfigs((prev) => ({
+                        ...prev,
+                        [platform]: {
+                          ...prev[platform],
+                          baseUrl: event.target.value,
+                        },
+                      }))
                     }
                   />
                   <small className="text-body-secondary d-block mt-1">
