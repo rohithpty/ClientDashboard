@@ -1,4 +1,0 @@
-"ID","Ticket status","Organization","Ticket Score","Ticket Criticality","Sentiment","Subject","Requested","Group","Priority","Associated Jira"
-"ZD-CR-1001","Open","Cascade Retail","42","Critical","Negative","Settlement failures on payout","2025-11-10 09:15","[L2] Advanced Support","High","Yes"
-"ZD-CR-1002","Open","Cascade Retail","28","High","Neutral","Intermittent auth timeout","2025-12-20 14:30","[L1] CS - Banking.Live","High","'-"
-"ZD-CR-1003","On-hold","Cascade Retail","15","Medium","Neutral","Report export slow","2026-01-20 11:00","[L1] CS - Banking.Live","Medium","'-"

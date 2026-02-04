@@ -137,3 +137,11 @@ dist
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+# Local tooling / OS
+.DS_Store
+.codex/
+
+# Local references & samples
+TS-Incident Priority Matrix-*.pdf
+mockups/
+samples/
