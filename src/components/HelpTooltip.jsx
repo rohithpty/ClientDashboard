@@ -3,8 +3,6 @@ import { useEffect, useRef, useState } from "react";
 export default function HelpTooltip({ id, text, placement = "top" }) {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef(null);
-  const bubbleRef = useRef(null);
-  const [position, setPosition] = useState({ left: 0, top: 0, arrowLeft: 0 });
 
   useEffect(() => {
     if (!open) {
@@ -22,36 +20,6 @@ export default function HelpTooltip({ id, text, placement = "top" }) {
       document.removeEventListener("touchstart", handleOutside);
     };
   }, [open]);
-
-  useEffect(() => {
-    if (!open) {
-      return;
-    }
-    const updatePosition = () => {
-      const bubble = bubbleRef.current;
-      const wrapper = wrapperRef.current;
-      if (!bubble || !wrapper) {
-        return;
-      }
-      const bubbleRect = bubble.getBoundingClientRect();
-      const wrapperRect = wrapper.getBoundingClientRect();
-      const padding = 12;
-      const preferredLeft =
-        wrapperRect.left + wrapperRect.width / 2 - bubbleRect.width / 2;
-      const minLeft = padding;
-      const maxLeft = window.innerWidth - padding - bubbleRect.width;
-      const left = Math.min(Math.max(preferredLeft, minLeft), maxLeft);
-      const top = wrapperRect.bottom + 8;
-      const arrowLeft = Math.min(
-        Math.max(wrapperRect.left + wrapperRect.width / 2 - left, 12),
-        bubbleRect.width - 12,
-      );
-      setPosition({ left, top, arrowLeft });
-    };
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    return () => window.removeEventListener("resize", updatePosition);
-  }, [open, text]);
 
   return (
     <span
@@ -83,12 +51,6 @@ export default function HelpTooltip({ id, text, placement = "top" }) {
         id={id}
         role="tooltip"
         className="help-tooltip__bubble"
-        ref={bubbleRef}
-        style={{
-          left: `${position.left}px`,
-          top: `${position.top}px`,
-          "--tooltip-arrow-left": `${position.arrowLeft}px`,
-        }}
       >
         {text}
       </span>

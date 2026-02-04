@@ -413,11 +413,6 @@ export default function ConfigPage() {
       return;
     }
     setExpandedCards((prev) => ({ ...prev, [target]: true }));
-    window.requestAnimationFrame(() => {
-      document
-        .getElementById(`admin-card-${target}`)
-        ?.scrollIntoView({ behavior: "smooth", block: "start" });
-    });
     hasAutoScrolledRef.current = true;
   }, []);
 
@@ -505,16 +500,10 @@ export default function ConfigPage() {
   };
 
   const toggleCardPreserveScroll = (id, summaryEl) => {
-    const y = window.scrollY;
     toggleCard(id);
     if (summaryEl) {
       summaryEl.blur();
     }
-    requestAnimationFrame(() => {
-      setTimeout(() => {
-        window.scrollTo({ top: y });
-      }, 0);
-    });
   };
 
   const regionOptions = useMemo(
