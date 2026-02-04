@@ -3281,14 +3281,14 @@ export default function ConfigPage() {
                 min="1"
                 max="600"
                 value={rateLimitConfig.requestsPerMinute}
-                onChange={(event) =>
-                    requestScrollRestore();
-                    setRateLimitConfig((prev) => ({
-                      ...prev,
-                      requestsPerMinute: parseInt(event.target.value) || 60,
-                    }))
-                  }
-                />
+                onChange={(event) => {
+                  requestScrollRestore();
+                  setRateLimitConfig((prev) => ({
+                    ...prev,
+                    requestsPerMinute: parseInt(event.target.value) || 60,
+                  }));
+                }}
+              />
               <small className="text-body-secondary d-block mt-1">
                 Limit requests to protect against rate limiting. Default: 60
               </small>
@@ -3300,13 +3300,13 @@ export default function ConfigPage() {
                   type="checkbox"
                   id="rate-limit-enabled"
                   checked={rateLimitConfig.enabled}
-                  onChange={(event) =>
+                  onChange={(event) => {
                     requestScrollRestore();
                     setRateLimitConfig((prev) => ({
                       ...prev,
                       enabled: event.target.checked,
-                    }))
-                  }
+                    }));
+                  }}
                 />
                 <label className="form-check-label" htmlFor="rate-limit-enabled">
                   <HelpInline text="Enable rate limiting" helpKey="rateLimitEnabled" />
@@ -3328,13 +3328,13 @@ export default function ConfigPage() {
                       type="checkbox"
                       id={`${platform}-enabled`}
                       checked={config_item.enabled}
-                      onChange={(event) =>
+                      onChange={(event) => {
                         requestScrollRestore();
                         setPlatformConfigs((prev) => ({
                           ...prev,
                           [platform]: { ...prev[platform], enabled: event.target.checked },
-                        }))
-                      }
+                        }));
+                      }}
                     />
                     <label className="form-check-label" htmlFor={`${platform}-enabled`}>
                       <HelpInline
@@ -3359,7 +3359,7 @@ export default function ConfigPage() {
                     type="password"
                     placeholder="Enter API key"
                     value={config_item.apiKey}
-                    onChange={(event) =>
+                    onChange={(event) => {
                       requestScrollRestore();
                       setPlatformConfigs((prev) => ({
                         ...prev,
@@ -3367,8 +3367,8 @@ export default function ConfigPage() {
                           ...prev[platform],
                           apiKey: event.target.value,
                         },
-                      }))
-                    }
+                      }));
+                    }}
                   />
                 </div>
 
@@ -3385,7 +3385,7 @@ export default function ConfigPage() {
                     type="url"
                     placeholder="https://..."
                     value={config_item.baseUrl}
-                    onChange={(event) =>
+                    onChange={(event) => {
                       requestScrollRestore();
                       setPlatformConfigs((prev) => ({
                         ...prev,
@@ -3393,8 +3393,8 @@ export default function ConfigPage() {
                           ...prev[platform],
                           baseUrl: event.target.value,
                         },
-                      }))
-                    }
+                      }));
+                    }}
                   />
                   <small className="text-body-secondary d-block mt-1">
                     {platform === "zendesk" && "e.g., https://your-domain.zendesk.com"}
