@@ -230,12 +230,6 @@ const HELP_TEXT = {
     "When enabled, missing RCA flags add weight to incident scoring.",
   useJiraPriority:
     "When enabled, JIRA priority is used in the JIRAs card calculation.",
-  scoringRedBand:
-    "Overall score at or above this value sets the client RAG to Red.",
-  scoringAmberBand:
-    "Overall score at or above this value sets the client RAG to Amber.",
-  scoringCap:
-    "Limits how much a single factor can contribute to the total score.",
   regionsList: "Defines the list of regions available in client profiles and filters.",
   environmentsList:
     "Defines the list of environments available in client profiles and filters.",
