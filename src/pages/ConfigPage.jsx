@@ -390,6 +390,7 @@ export default function ConfigPage() {
     }));
   }, [platformConfigs, rateLimitConfig, scoringConfig]);
 
+
   useEffect(() => {
     if (!editingId) {
       setFormState(buildEmptyForm(config));
@@ -415,6 +416,7 @@ export default function ConfigPage() {
     setExpandedCards((prev) => ({ ...prev, [target]: true }));
     hasAutoScrolledRef.current = true;
   }, []);
+
 
   useEffect(() => {
     if (!expandedCards.scoring) {
@@ -505,6 +507,22 @@ export default function ConfigPage() {
       summaryEl.blur();
     }
   };
+
+  const restoreScrollNextFrame = () => {
+    const scroller = document.scrollingElement || document.documentElement;
+    if (!scroller) {
+      return;
+    }
+    const top = scroller.scrollTop;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        if (scroller.scrollTop !== top) {
+          scroller.scrollTop = top;
+        }
+      });
+    });
+  };
+
 
   const regionOptions = useMemo(
     () =>
@@ -1837,24 +1855,31 @@ export default function ConfigPage() {
       return null;
     }
 
+    const cardClassName = [
+      "card",
+      "shadow-sm",
+      "admin-card",
+      "admin-card--collapsible",
+      open ? "admin-card--open" : "",
+    ]
+      .filter(Boolean)
+      .join(" ");
+    const bodyId = bodyProps.id ?? `admin-card-body-${id}`;
+
     return (
-      <details
+      <section
         id={`admin-card-${id}`}
-        className="card shadow-sm admin-card admin-card--collapsible"
-        open={open}
+        className={cardClassName}
         data-tooltip-boundary
       >
-        <summary
+        <button
           className="admin-card__summary"
+          type="button"
+          aria-expanded={open}
+          aria-controls={bodyId}
           onClick={(event) => {
             event.preventDefault();
             toggleCardPreserveScroll(id, event.currentTarget);
-          }}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              toggleCardPreserveScroll(id, event.currentTarget);
-            }
           }}
         >
           <div>
@@ -1864,8 +1889,14 @@ export default function ConfigPage() {
             ) : null}
           </div>
           <span className="admin-card__chevron" aria-hidden="true" />
-        </summary>
-        <BodyTag {...bodyProps} className={bodyClassName}>
+        </button>
+        <BodyTag
+          {...bodyProps}
+          id={bodyId}
+          className={bodyClassName}
+          hidden={!open}
+          aria-hidden={!open}
+        >
           {children}
           {bodyAs === "form" && footer ? (
             <div className="card-footer bg-white border-0 d-flex flex-wrap gap-2">
@@ -1874,11 +1905,15 @@ export default function ConfigPage() {
           ) : null}
         </BodyTag>
         {bodyAs !== "form" && footer ? (
-          <div className="card-footer bg-white border-0 d-flex flex-wrap gap-2">
+          <div
+            className="card-footer bg-white border-0 d-flex flex-wrap gap-2"
+            hidden={!open}
+            aria-hidden={!open}
+          >
             {footer}
           </div>
         ) : null}
-      </details>
+      </section>
     );
   };
 
@@ -3274,10 +3309,11 @@ export default function ConfigPage() {
                   id="rate-limit-enabled"
                   checked={rateLimitConfig.enabled}
                   onChange={(event) =>
+                    (restoreScrollNextFrame(),
                     setRateLimitConfig((prev) => ({
                       ...prev,
                       enabled: event.target.checked,
-                    }))
+                    })))
                   }
                 />
                 <label className="form-check-label" htmlFor="rate-limit-enabled">
@@ -3301,10 +3337,11 @@ export default function ConfigPage() {
                       id={`${platform}-enabled`}
                       checked={config_item.enabled}
                       onChange={(event) =>
+                        (restoreScrollNextFrame(),
                         setPlatformConfigs((prev) => ({
                           ...prev,
                           [platform]: { ...prev[platform], enabled: event.target.checked },
-                        }))
+                        })))
                       }
                     />
                     <label className="form-check-label" htmlFor={`${platform}-enabled`}>
@@ -3329,8 +3366,8 @@ export default function ConfigPage() {
                     className="form-control form-control-sm"
                     type="password"
                     placeholder="Enter API key"
-                    value={config_item.apiKey}
-                    onChange={(event) =>
+                    defaultValue={config_item.apiKey}
+                    onBlur={(event) =>
                       setPlatformConfigs((prev) => ({
                         ...prev,
                         [platform]: {
@@ -3354,8 +3391,8 @@ export default function ConfigPage() {
                     className="form-control form-control-sm"
                     type="url"
                     placeholder="https://..."
-                    value={config_item.baseUrl}
-                    onChange={(event) =>
+                    defaultValue={config_item.baseUrl}
+                    onBlur={(event) =>
                       setPlatformConfigs((prev) => ({
                         ...prev,
                         [platform]: {
