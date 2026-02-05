@@ -1,55 +1,66 @@
-const INCIDENT_HEADERS = [
+const INCIDENT_REQUIRED_HEADERS = [
   "ID",
-  "Ticket status",
-  "Organization",
-  "Requester",
-  "Subject",
-  "Priority",
-  "SLA",
-  "Requested",
-  "Updated",
-  "Ticket form",
-  "Org Tier",
+  "Status",
+  "Severity",
+  "Impacted Client(s)",
+  "Root Cause Analysis Summary",
+  "Created At",
+  "Resolved at",
 ];
 
 const INCIDENT_HEADER_KEY_MAP = {
-  ID: "id",
-  "Ticket status": "ticketStatus",
-  Organization: "organization",
-  Requester: "requester",
-  Subject: "subject",
-  Priority: "priority",
-  SLA: "sla",
-  Requested: "requested",
-  Updated: "updated",
-  "Ticket form": "ticketForm",
-  "Org Tier": "orgTier",
+  id: "ID",
+  ticketStatus: "Status",
+  priority: "Severity",
+  organization: "Impacted Client(s)",
+  rcaSummary: "Root Cause Analysis Summary",
+  requested: "Created At",
+  resolvedAt: "Resolved at",
+  reportedAt: "Reported at",
 };
 
-const SUPPORT_TICKET_HEADERS = [
+const SUPPORT_TICKET_REQUIRED_HEADERS = [
   "ID",
   "Ticket status",
   "Organization",
+  "Ticket Criticality",
+  "Ticket Score",
+  "Sentiment",
   "Subject",
-  "Group",
-  "Assignee",
-  "Priority",
-  "SLA",
   "Requested",
-  "Associated Jira",
+  "Priority",
 ];
 
 const SUPPORT_TICKET_HEADER_KEY_MAP = {
-  ID: "id",
-  "Ticket status": "ticketStatus",
-  Organization: "organization",
-  Subject: "subject",
-  Group: "group",
-  Assignee: "assignee",
-  Priority: "priority",
-  SLA: "sla",
-  Requested: "requested",
-  "Associated Jira": "associatedJira",
+  id: "ID",
+  ticketStatus: "Ticket status",
+  organization: "Organization",
+  criticality: "Ticket Criticality",
+  score: "Ticket Score",
+  sentiment: "Sentiment",
+  subject: "Subject",
+  requested: "Requested",
+  priority: "Priority",
+  associatedJira: "Associated Jira",
+  group: "Group",
+};
+
+const JIRA_REQUIRED_HEADERS = ["Issue key", "Status", "Priority", "Created", "Updated"];
+
+const JIRA_HEADER_KEY_MAP = {
+  id: "Issue key",
+  ticketStatus: "Status",
+  priority: "Priority",
+  requested: "Created",
+  updated: "Updated",
+  organization: [
+    "Custom field (Client Name [ZD])",
+    "Custom field (Client name)",
+    "Custom field (Client)",
+    "Custom field (Client Name)",
+    "Custom field (Client)",
+    "Project name",
+  ],
 };
 
 const parseCsvLine = (line) => {
@@ -95,6 +106,7 @@ export const parseReportCsv = (csvText, schema) => {
     throw new Error("CSV schema is required.");
   }
   const expectedHeaders = schema.headers;
+  const requiredHeaders = schema.requiredHeaders || [];
   const headerKeyMap = schema.keyMap;
   const rows = normalizeRows(csvText);
   if (rows.length === 0) {
@@ -102,18 +114,36 @@ export const parseReportCsv = (csvText, schema) => {
   }
 
   const headerValues = parseCsvLine(rows[0]).map((value) => value.trim());
-  const headerKey = headerValues.join("|");
-  const expectedKey = expectedHeaders.join("|");
-
-  if (headerKey !== expectedKey) {
-    throw new Error("CSV headers do not match the expected template.");
+  if (expectedHeaders && !requiredHeaders.length) {
+    const headerKey = headerValues.join("|");
+    const expectedKey = expectedHeaders.join("|");
+    if (headerKey !== expectedKey) {
+      throw new Error("CSV headers do not match the expected template.");
+    }
   }
+
+  if (requiredHeaders.length) {
+    const missing = requiredHeaders.filter((header) => !headerValues.includes(header));
+    if (missing.length) {
+      throw new Error("CSV headers do not match the expected template.");
+    }
+  }
+
+  const indexMap = headerValues.reduce((acc, header, index) => {
+    acc[header] = index;
+    return acc;
+  }, {});
 
   return rows.slice(1).map((row) => {
     const values = parseCsvLine(row);
-    return expectedHeaders.reduce((acc, header, index) => {
-      const key = headerKeyMap[header];
-      acc[key] = values[index] ?? "";
+    return Object.entries(headerKeyMap).reduce((acc, [sourceKey, headerName]) => {
+      if (Array.isArray(headerName)) {
+        const resolvedHeader = headerName.find((candidate) => candidate in indexMap);
+        acc[sourceKey] = resolvedHeader ? values[indexMap[resolvedHeader]] ?? "" : "";
+        return acc;
+      }
+      const index = indexMap[headerName];
+      acc[sourceKey] = index !== undefined ? values[index] ?? "" : "";
       return acc;
     }, {});
   });
@@ -159,23 +189,23 @@ export const mergeReportRecords = (existingRecords, incomingRecords, importedAt)
 
 export const REPORT_SCHEMAS = {
   incidents: {
-    headers: INCIDENT_HEADERS,
+    requiredHeaders: INCIDENT_REQUIRED_HEADERS,
     keyMap: INCIDENT_HEADER_KEY_MAP,
   },
   jiras: {
-    headers: INCIDENT_HEADERS,
-    keyMap: INCIDENT_HEADER_KEY_MAP,
+    requiredHeaders: JIRA_REQUIRED_HEADERS,
+    keyMap: JIRA_HEADER_KEY_MAP,
   },
   "product-requests": {
-    headers: INCIDENT_HEADERS,
+    requiredHeaders: INCIDENT_REQUIRED_HEADERS,
     keyMap: INCIDENT_HEADER_KEY_MAP,
   },
   "implementation-requests": {
-    headers: INCIDENT_HEADERS,
+    requiredHeaders: INCIDENT_REQUIRED_HEADERS,
     keyMap: INCIDENT_HEADER_KEY_MAP,
   },
   "support-tickets": {
-    headers: SUPPORT_TICKET_HEADERS,
+    requiredHeaders: SUPPORT_TICKET_REQUIRED_HEADERS,
     keyMap: SUPPORT_TICKET_HEADER_KEY_MAP,
   },
 };

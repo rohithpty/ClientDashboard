@@ -1,6 +1,5 @@
-import { seedClients } from "./seedClients.js";
-
-const STORAGE_KEY = "rag-clients";
+const STORAGE_KEY = "rag-clients-v2";
+const LEGACY_STORAGE_KEY = "rag-clients";
 
 const safeParse = (stored) => {
   if (!stored) {
@@ -17,7 +16,14 @@ const safeParse = (stored) => {
 export const localClientsRepository = {
   getClients() {
     const parsed = safeParse(localStorage.getItem(STORAGE_KEY));
-    return Array.isArray(parsed) ? parsed : seedClients;
+    if (Array.isArray(parsed)) {
+      return parsed;
+    }
+    const legacyParsed = safeParse(localStorage.getItem(LEGACY_STORAGE_KEY));
+    if (Array.isArray(legacyParsed) && legacyParsed.length) {
+      localStorage.removeItem(LEGACY_STORAGE_KEY);
+    }
+    return [];
   },
   saveClients(clients) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(clients));

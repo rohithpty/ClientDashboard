@@ -25,9 +25,13 @@ export default function ClientCard({ client }) {
   const [isStatusOpen, setIsStatusOpen] = useState(false);
   const [statusValue, setStatusValue] = useState(client.currentStatus ?? "Green");
   const [statusNote, setStatusNote] = useState("");
-  const ticketSummary = `L1: ${client.metrics.tickets.L1}, L2: ${client.metrics.tickets.L2}, L3: ${client.metrics.tickets.L3} | >30d: ${client.metrics.tickets.olderThan30}, >60d: ${client.metrics.tickets.olderThan60}`;
-  const totalTickets =
-    client.metrics.tickets.L1 + client.metrics.tickets.L2 + client.metrics.tickets.L3;
+  const cardScores = client.cardScores ?? {
+    tickets: { status: "Green", reason: "No data", counts: {} },
+    incidents: { status: "Green", reason: "No data", counts: {} },
+    jiras: { status: "Green", reason: "No data", counts: {} },
+    requests: { status: "Green", reason: "No data", counts: {} },
+  };
+  const totalTickets = cardScores.tickets.counts?.openCount ?? 0;
   const schemes = client.schemes ?? [];
   const incidentSummary = client.incidentSummary ?? {
     rca: 0,
@@ -43,20 +47,39 @@ export default function ClientCard({ client }) {
     over60: 0,
     over90: 0,
   };
+  const requestCounts = {
+    over7: cardScores.requests.counts?.over7 ?? 0,
+    over30: cardScores.requests.counts?.over30 ?? 0,
+    over60: cardScores.requests.counts?.over60 ?? 0,
+  };
+  const displayStatus = client.displayStatus ?? client.currentStatus;
   const statusTone =
-    client.currentStatus === "Red"
+    displayStatus === "Red"
       ? "risk"
-      : client.currentStatus === "Amber"
+      : displayStatus === "Amber"
         ? "watch"
         : "healthy";
   const statusLabel =
-    client.currentStatus === "Red"
+    displayStatus === "Red"
       ? "At Risk"
-      : client.currentStatus === "Amber"
+      : displayStatus === "Amber"
         ? "Watch"
         : "Healthy";
   const incidentOver30Class = incidentSummary.over30 > 0 ? "text-danger" : "text-muted";
   const statusOptions = ["Red", "Amber", "Green"];
+  const cardTone = (status) =>
+    status === "Red" ? "risk" : status === "Amber" ? "watch" : "healthy";
+  const ticketCounts = {
+    over7: cardScores.tickets.counts?.over7 ?? 0,
+    over30: cardScores.tickets.counts?.over30 ?? 0,
+    over60: cardScores.tickets.counts?.over60 ?? 0,
+  };
+  const ticketSummary = `>7d: ${ticketCounts.over7}, >30d: ${ticketCounts.over30}, >60d: ${ticketCounts.over60}`;
+  const incidentCounts = {
+    over7: cardScores.incidents.counts?.over7 ?? 0,
+    over30: cardScores.incidents.counts?.over30 ?? 0,
+    over60: cardScores.incidents.counts?.over60 ?? 0,
+  };
 
   const handleToggleStatus = () => {
     setIsStatusOpen((prev) => !prev);
@@ -180,10 +203,14 @@ export default function ClientCard({ client }) {
           <div className="tile-header">
             <i className="bi bi-ticket-perforated" aria-hidden="true"></i>
             Tickets
+            <span className={`card-status status-${cardTone(cardScores.tickets.status)}`}>
+              {cardScores.tickets.status}
+            </span>
           </div>
           <div className="tile-stat" title={ticketSummary}>
             {totalTickets} total
           </div>
+          <div className="tile-driver">{cardScores.tickets.reason}</div>
           <div className="tile-list">
             <div>
               <span>RCA</span>
@@ -191,15 +218,15 @@ export default function ClientCard({ client }) {
             </div>
             <div>
               <span>&gt;7 days</span>
-              <strong>{supportSummary.over7}</strong>
+              <strong>{ticketCounts.over7}</strong>
             </div>
             <div>
               <span>&gt;30 days</span>
-              <strong>{supportSummary.over30}</strong>
+              <strong>{ticketCounts.over30}</strong>
             </div>
             <div>
               <span>&gt;60 days</span>
-              <strong>{supportSummary.over60}</strong>
+              <strong>{ticketCounts.over60}</strong>
             </div>
           </div>
         </section>
@@ -207,8 +234,12 @@ export default function ClientCard({ client }) {
           <div className="tile-header">
             <i className="bi bi-kanban" aria-hidden="true"></i>
             JIRAs
+            <span className={`card-status status-${cardTone(cardScores.jiras.status)}`}>
+              {cardScores.jiras.status}
+            </span>
           </div>
-          <div className="tile-stat">{client.metrics.jiras.openCount} open</div>
+          <div className="tile-stat">{cardScores.jiras.counts?.openCount ?? 0} open</div>
+          <div className="tile-driver">{cardScores.jiras.reason}</div>
           <div className="tile-subtext">
             Avg age: <strong>{client.metrics.jiras.avgAgeDays} days</strong>
           </div>
@@ -217,15 +248,36 @@ export default function ClientCard({ client }) {
           <div className="tile-header">
             <i className="bi bi-inbox" aria-hidden="true"></i>
             Requests
+            <span className={`card-status status-${cardTone(cardScores.requests.status)}`}>
+              {cardScores.requests.status}
+            </span>
           </div>
-          <div className="tile-stat">{client.metrics.requests} active</div>
-          <div className="tile-subtext">Response SLA tracking enabled.</div>
+          <div className="tile-stat">{cardScores.requests.counts?.openCount ?? 0} active</div>
+          <div className="tile-driver">{cardScores.requests.reason}</div>
+          <div className="tile-list compact">
+            <div>
+              <span>&gt;7 days</span>
+              <strong>{requestCounts.over7}</strong>
+            </div>
+            <div>
+              <span>&gt;30 days</span>
+              <strong>{requestCounts.over30}</strong>
+            </div>
+            <div>
+              <span>&gt;60 days</span>
+              <strong>{requestCounts.over60}</strong>
+            </div>
+          </div>
         </section>
         <section className="client-card__tile">
           <div className="tile-header">
             <i className="bi bi-exclamation-triangle" aria-hidden="true"></i>
             Incidents
+            <span className={`card-status status-${cardTone(cardScores.incidents.status)}`}>
+              {cardScores.incidents.status}
+            </span>
           </div>
+          <div className="tile-driver">{cardScores.incidents.reason}</div>
           <div className="tile-list compact">
             <div>
               <span>RCA</span>
@@ -233,15 +285,15 @@ export default function ClientCard({ client }) {
             </div>
             <div className={incidentOver30Class}>
               <span>&gt;7 days</span>
-              <strong>{incidentSummary.over7}</strong>
+              <strong>{incidentCounts.over7}</strong>
             </div>
             <div className={incidentOver30Class}>
               <span>&gt;30 days</span>
-              <strong>{incidentSummary.over30}</strong>
+              <strong>{incidentCounts.over30}</strong>
             </div>
             <div className={incidentOver30Class}>
               <span>&gt;60 days</span>
-              <strong>{incidentSummary.over60}</strong>
+              <strong>{incidentCounts.over60}</strong>
             </div>
           </div>
         </section>

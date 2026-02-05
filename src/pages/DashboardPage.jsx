@@ -3,6 +3,8 @@ import { Link } from "react-router-dom";
 import ClientCard from "../components/ClientCard.jsx";
 import { useClients } from "../state/ClientsContext.jsx";
 import { getReportData } from "../data/reportRepository.js";
+import { localConfigRepository } from "../data/configRepository.js";
+import { computeClientScores, rollupClientStatus } from "../utils/scoring.js";
 
 const STATUS_ORDER = ["Red", "Amber", "Green"];
 const STATUS_LABELS = {
@@ -13,7 +15,11 @@ const STATUS_LABELS = {
 
 const sortByStatus = (clients) => {
   const priority = Object.fromEntries(STATUS_ORDER.map((status, index) => [status, index]));
-  return [...clients].sort((a, b) => priority[a.currentStatus] - priority[b.currentStatus]);
+  return [...clients].sort((a, b) => {
+    const left = a.displayStatus ?? a.currentStatus;
+    const right = b.displayStatus ?? b.currentStatus;
+    return priority[left] - priority[right];
+  });
 };
 
 const normalizeName = (value) => value?.trim().toLowerCase() ?? "";
@@ -81,22 +87,40 @@ export default function DashboardPage() {
   const { clients } = useClients();
   const incidentRecords = getReportData("incidents").records;
   const supportRecords = getReportData("support-tickets").records;
+  const jiraRecords = getReportData("jiras").records;
+  const requestRecords = [
+    ...getReportData("product-requests").records,
+    ...getReportData("implementation-requests").records,
+  ];
+  const scoringConfig = localConfigRepository.getConfig().scoringConfig;
   const clientsWithSummaries = useMemo(
     () =>
-      clients.map((client) => ({
-        ...client,
-        incidentSummary: buildTicketSummary(incidentRecords, client),
-        supportSummary: buildTicketSummary(supportRecords, client),
-      })),
-    [clients, incidentRecords, supportRecords],
+      clients.map((client) => {
+        const cardScores = computeClientScores({
+          client,
+          tickets: supportRecords,
+          incidents: incidentRecords,
+          jiras: jiraRecords,
+          requests: requestRecords,
+          config: scoringConfig,
+        });
+        return {
+          ...client,
+          cardScores,
+          incidentSummary: buildTicketSummary(incidentRecords, client),
+          supportSummary: buildTicketSummary(supportRecords, client),
+          displayStatus: rollupClientStatus(cardScores, scoringConfig),
+        };
+      }),
+    [clients, incidentRecords, supportRecords, jiraRecords, requestRecords, scoringConfig],
   );
   const sortedClients = useMemo(() => sortByStatus(clientsWithSummaries), [clientsWithSummaries]);
 
   const statusCounts = useMemo(() => {
     const counts = { Red: 0, Amber: 0, Green: 0 };
     clientsWithSummaries.forEach((client) => {
-      if (counts[client.currentStatus] !== undefined) {
-        counts[client.currentStatus] += 1;
+      if (counts[client.displayStatus] !== undefined) {
+        counts[client.displayStatus] += 1;
       }
     });
     return counts;
@@ -138,7 +162,7 @@ export default function DashboardPage() {
 
   const filteredClients = useMemo(() => {
     return sortedClients.filter((client) => {
-      if (statusFilter !== "All" && client.currentStatus !== statusFilter) {
+      if (statusFilter !== "All" && client.displayStatus !== statusFilter) {
         return false;
       }
       if (regionFilter !== "All" && client.region !== regionFilter) {
@@ -317,7 +341,11 @@ export default function DashboardPage() {
             Sorted by health status so critical accounts surface first.
           </p>
         </div>
-        <Link className="btn btn-amber" to="/config">
+        <Link
+          className="btn btn-amber"
+          to="/config#clientForm"
+          state={{ openCard: "clientForm" }}
+        >
           Add client
         </Link>
       </div>
