@@ -20,29 +20,26 @@ const INCIDENT_HEADER_KEY_MAP = {
 };
 
 const SUPPORT_TICKET_REQUIRED_HEADERS = [
-  "ID",
+  ["ID", "Ticket ID"],
   "Ticket status",
-  "Organization",
-  "Ticket Criticality",
-  "Ticket Score",
-  "Sentiment",
-  "Subject",
-  "Requested",
-  "Priority",
+  ["Organization", "Ticket organization name"],
+  ["Subject", "Ticket subject"],
+  ["Requested", "Ticket created - Date"],
+  ["Priority", "Ticket priority"],
 ];
 
 const SUPPORT_TICKET_HEADER_KEY_MAP = {
-  id: "ID",
+  id: ["ID", "Ticket ID"],
   ticketStatus: "Ticket status",
-  organization: "Organization",
+  organization: ["Organization", "Ticket organization name"],
   criticality: "Ticket Criticality",
   score: "Ticket Score",
   sentiment: "Sentiment",
-  subject: "Subject",
-  requested: "Requested",
-  priority: "Priority",
+  subject: ["Subject", "Ticket subject"],
+  requested: ["Requested", "Ticket created - Date"],
+  priority: ["Priority", "Ticket priority"],
   associatedJira: "Associated Jira",
-  group: "Group",
+  group: ["Group", "Ticket group"],
 };
 
 const JIRA_REQUIRED_HEADERS = ["Issue key", "Status", "Priority", "Created", "Updated"];
@@ -123,7 +120,12 @@ export const parseReportCsv = (csvText, schema) => {
   }
 
   if (requiredHeaders.length) {
-    const missing = requiredHeaders.filter((header) => !headerValues.includes(header));
+    const missing = requiredHeaders.filter((header) => {
+      if (Array.isArray(header)) {
+        return !header.some((candidate) => headerValues.includes(candidate));
+      }
+      return !headerValues.includes(header);
+    });
     if (missing.length) {
       throw new Error("CSV headers do not match the expected template.");
     }

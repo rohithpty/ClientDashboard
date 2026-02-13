@@ -56,6 +56,30 @@ describe("parseReportCsv", () => {
     ]);
   });
 
+
+
+  it("parses support tickets CSV with alternate headers and extra columns", () => {
+    const supportCsv = `"Ticket ID","Ticket organization name","Requester name","Ticket priority","Ticket status","Ticket channel","Ticket group","Assignee name","Ticket created - Date","Ticket solved - Date","Ticket subject","Ticket form","Tickets"
+"1054618","D360","Jane Doe","High","Requires more info","Email","[L2] Advanced Support","John Agent","2025-11-02 17:52","2025-11-03 10:00","Customers Able to Exceed Daily POS/Online Limits","General","1"`;
+
+    const records = parseReportCsv(supportCsv, REPORT_SCHEMAS["support-tickets"]);
+
+    expect(records).toEqual([
+      {
+        id: "1054618",
+        ticketStatus: "Requires more info",
+        organization: "D360",
+        criticality: "",
+        score: "",
+        sentiment: "",
+        subject: "Customers Able to Exceed Daily POS/Online Limits",
+        requested: "2025-11-02 17:52",
+        priority: "High",
+        associatedJira: "",
+        group: "[L2] Advanced Support",
+      },
+    ]);
+  });
   it("parses the JIRA CSV into structured records", () => {
     const jiraCsv = `"Summary","Issue key","Status","Priority","Created","Updated","Custom field (Client Name [ZD])"
 "[DE Rollout] Mettle","TECH-834","Proposal","Normal","11/Nov/25 6:29 PM","10/Dec/25 10:19 AM","Mettle"`;
